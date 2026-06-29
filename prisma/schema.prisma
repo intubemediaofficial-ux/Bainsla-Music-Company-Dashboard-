@@ -1,0 +1,1645 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  MANAGER
+  YOUTUBE_MANAGER
+  COPYRIGHT_MANAGER
+  DESIGNER
+  STUDIO_STAFF
+  VIDEO_TEAM
+  ACCOUNTANT
+  ARTIST_CLIENT
+}
+
+enum ClientType {
+  ARTIST
+  SINGER
+  LABEL
+  STUDIO
+  COMPOSER
+  LYRICIST
+  VIDEO_CLIENT
+}
+
+enum ClientStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+enum SongCategory {
+  BHAJAN
+  RASIYA
+  DJ
+  FOLK
+  DEVOTIONAL
+  REMIX
+  FILM
+  OTHER
+}
+
+enum SongStage {
+  IDEA
+  LYRICS
+  SINGER_CONFIRMED
+  AGREEMENT_PENDING
+  AGREEMENT_SIGNED
+  RECORDING_BOOKED
+  RECORDING_DONE
+  MIXING
+  MASTERING
+  AUDIO_FINAL
+  ARTWORK_PENDING
+  ARTWORK_APPROVED
+  VIDEO_SHOOT_PENDING
+  VIDEO_SHOOT_DONE
+  EDITING
+  FINAL_VIDEO_READY
+  DISTRIBUTION_SUBMITTED
+  DISTRIBUTION_LIVE
+  YOUTUBE_SEO_READY
+  YOUTUBE_UPLOADED
+  RELEASED
+  COPYRIGHT_PROTECTED
+  REVENUE_STARTED
+}
+
+enum StageStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  DELAYED
+  BLOCKED
+}
+
+enum ParticipantRole {
+  SINGER
+  LYRICIST
+  COMPOSER
+  MUSIC_DIRECTOR
+  ACTOR
+  DANCER
+  MODEL
+  STUDIO
+  EDITOR
+  DIRECTOR
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum AiOutputType {
+  TEXT
+  IMAGE_PROMPT
+  SEO
+  AGREEMENT
+  NOTICE
+  REPORT
+  THUMBNAIL_PROMPT
+  SUMMARY
+}
+
+enum UploadStatus {
+  DRAFT
+  SCHEDULED
+  UPLOADED
+  LIVE
+  FAILED
+}
+
+enum ArtworkStatus {
+  REQUESTED
+  PROMPT_GENERATED
+  IMAGE_GENERATED
+  DESIGNER_EDITING
+  SENT_FOR_APPROVAL
+  REVISION_REQUESTED
+  APPROVED
+  FINAL_EXPORTED
+  USED_IN_UPLOAD
+  REJECTED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  phone         String?
+  passwordHash  String
+  role          UserRole  @default(ARTIST_CLIENT)
+  avatarUrl     String?
+  status        String    @default("active")
+  lastLogin     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  tasks           Task[]         @relation("AssignedTasks")
+  createdTasks    Task[]         @relation("CreatedTasks")
+  notifications   Notification[]
+  aiGenerations   AiGeneration[]
+  uploadedFiles   File[]
+  createdClients  Client[]       @relation("CreatedByUser")
+  artworkDesigner ArtworkItem[]  @relation("DesignerArtwork")
+  artworkApprover ArtworkItem[]  @relation("ApproverArtwork")
+  imageGenerations ImageGeneration[]
+  seoGenerations  SeoGeneration[]
+  copyrightCases  CopyrightCase[]
+
+  @@map("users")
+}
+
+model Client {
+  id                    String       @id @default(cuid())
+  clientType            ClientType
+  name                  String
+  stageName             String?
+  phone                 String?
+  whatsappNumber        String?
+  email                 String?
+  address               String?
+  city                  String?
+  state                 String?
+  country               String?
+  aadhaarNumber         String?
+  panNumber             String?
+  gstNumber             String?
+  bankName              String?
+  accountNumber         String?
+  ifsc                  String?
+  upiId                 String?
+  revenueSharePercentage Float?
+  advanceAmount         Float?       @default(0)
+  pendingAmount         Float?       @default(0)
+  totalPaid             Float?       @default(0)
+  notes                 String?
+  status                ClientStatus @default(ACTIVE)
+  createdById           String?
+  createdBy             User?        @relation("CreatedByUser", fields: [createdById], references: [id])
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  songParticipants SongParticipant[]
+  songsAsSinger    Song[]           @relation("SingerSongs")
+  songsAsLyricist  Song[]           @relation("LyricistSongs")
+  songsAsComposer  Song[]           @relation("ComposerSongs")
+  songsAsMusicDir  Song[]           @relation("MusicDirectorSongs")
+  copyrightAssets  CopyrightAsset[]
+
+  @@map("clients")
+}
+
+model Song {
+  id                    String       @id @default(cuid())
+  songTitle             String
+  alternateTitle        String?
+  language              String?      @default("Hindi")
+  category              SongCategory @default(OTHER)
+  genre                 String?
+  mood                  String?
+  singerId              String?
+  singer                Client?      @relation("SingerSongs", fields: [singerId], references: [id])
+  lyricistId            String?
+  lyricist              Client?      @relation("LyricistSongs", fields: [lyricistId], references: [id])
+  composerId            String?
+  composer              Client?      @relation("ComposerSongs", fields: [composerId], references: [id])
+  musicDirectorId       String?
+  musicDirector         Client?      @relation("MusicDirectorSongs", fields: [musicDirectorId], references: [id])
+  producerName          String?
+  labelName             String?      @default("Bainsla Music")
+  copyrightOwner        String?
+  revenueSharePercentage Float?
+  currentStage          SongStage    @default(IDEA)
+  stageStatus           StageStatus  @default(PENDING)
+  audioStatus           String?      @default("pending")
+  videoStatus           String?      @default("pending")
+  artworkStatus         String?      @default("pending")
+  agreementStatus       String?      @default("pending")
+  distributionStatus    String?      @default("pending")
+  youtubeStatus         String?      @default("pending")
+  copyrightStatus       String?      @default("pending")
+  releaseStatus         String?      @default("pending")
+  releaseDate           DateTime?
+  isrc                  String?
+  upc                   String?
+  youtubeLink           String?
+  spotifyLink           String?
+  appleMusicLink        String?
+  jiosaavnLink          String?
+  amazonMusicLink       String?
+  youtubeMusicLink      String?
+  lyrics                String?
+  description           String?
+  internalNotes         String?
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  participants    SongParticipant[]
+  statusHistory   SongStatusHistory[]
+  files           File[]             @relation("SongFiles")
+  youtubeVideos   YoutubeVideo[]
+  artworkItems    ArtworkItem[]
+  imageGenerations ImageGeneration[]
+  seoGenerations  SeoGeneration[]
+  copyrightAssets CopyrightAsset[]
+
+  @@map("songs")
+}
+
+model SongParticipant {
+  id              String          @id @default(cuid())
+  songId          String
+  song            Song            @relation(fields: [songId], references: [id], onDelete: Cascade)
+  clientId        String
+  client          Client          @relation(fields: [clientId], references: [id])
+  role            ParticipantRole
+  sharePercentage Float?
+  rightsAssigned  Boolean         @default(false)
+  agreementSigned Boolean         @default(false)
+  paymentAmount   Float?
+  paymentStatus   String?         @default("pending")
+  notes           String?
+
+  @@map("song_participants")
+}
+
+model SongStatusHistory {
+  id        String   @id @default(cuid())
+  songId    String
+  song      Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+  oldStatus String?
+  newStatus String
+  changedBy String?
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@map("song_status_history")
+}
+
+model File {
+  id          String   @id @default(cuid())
+  relatedType String?
+  relatedId   String?
+  songId      String?
+  song        Song?    @relation("SongFiles", fields: [songId], references: [id])
+  fileName    String
+  fileType    String?
+  fileUrl     String
+  fileSize    Int?
+  uploadedById String?
+  uploadedBy  User?    @relation(fields: [uploadedById], references: [id])
+  tags        String[]
+  createdAt   DateTime @default(now())
+
+  @@map("files")
+}
+
+model Task {
+  id          String      @id @default(cuid())
+  title       String
+  description String?
+  assignedToId String?
+  assignedTo  User?       @relation("AssignedTasks", fields: [assignedToId], references: [id])
+  relatedType String?
+  relatedId   String?
+  priority    TaskPriority @default(MEDIUM)
+  status      TaskStatus   @default(PENDING)
+  dueDate     DateTime?
+  reminderDate DateTime?
+  createdById String?
+  createdBy   User?       @relation("CreatedTasks", fields: [createdById], references: [id])
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@map("tasks")
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  title       String
+  message     String?
+  type        String?
+  relatedType String?
+  relatedId   String?
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@map("notifications")
+}
+
+model AiGeneration {
+  id          String      @id @default(cuid())
+  userId      String?
+  user        User?       @relation(fields: [userId], references: [id])
+  moduleName  String?
+  inputData   Json?
+  promptUsed  String?
+  aiOutput    String?
+  outputType  AiOutputType @default(TEXT)
+  relatedType String?
+  relatedId   String?
+  createdAt   DateTime    @default(now())
+
+  @@map("ai_generations")
+}
+
+model AiPromptTemplate {
+  id           String   @id @default(cuid())
+  templateName String
+  module       String?
+  inputFields  Json?
+  systemPrompt String?
+  userPrompt   String?
+  outputFormat String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("ai_prompt_templates")
+}
+
+model AiSettings {
+  id              String  @id @default(cuid())
+  aiProvider      String  @default("openai")
+  apiKey          String?
+  textModel       String  @default("gpt-4")
+  imageModel      String? @default("dall-e-3")
+  temperature     Float   @default(0.7)
+  maxTokens       Int     @default(2000)
+  defaultLanguage String  @default("Hindi")
+  companyTone     String  @default("professional")
+  saveHistory     Boolean @default(true)
+
+  @@map("ai_settings")
+}
+
+// Part 2 - YouTube Management
+model YoutubeChannel {
+  id                        String   @id @default(cuid())
+  channelName               String
+  channelUrl                String?
+  channelId                 String?
+  category                  String?
+  ownerName                 String?
+  managerUserId             String?
+  status                    String   @default("active")
+  subscribersCount          Int?     @default(0)
+  totalViews                Int?     @default(0)
+  monthlyViews              Int?     @default(0)
+  monthlyRevenue            Float?   @default(0)
+  rpm                       Float?
+  ctr                       Float?
+  averageViewDuration       String?
+  copyrightStrikes          Int?     @default(0)
+  communityGuidelineStrikes Int?     @default(0)
+  monetizationStatus        String?  @default("active")
+  notes                     String?
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  videos YoutubeVideo[]
+
+  @@map("youtube_channels")
+}
+
+model YoutubeVideo {
+  id                  String       @id @default(cuid())
+  songId              String?
+  song                Song?        @relation(fields: [songId], references: [id])
+  channelId           String?
+  channel             YoutubeChannel? @relation(fields: [channelId], references: [id])
+  videoTitle          String?
+  videoDescription    String?
+  videoTags           String[]
+  hashtags            String[]
+  pinnedComment       String?
+  thumbnailId         String?
+  uploadStatus        UploadStatus @default(DRAFT)
+  uploadDate          DateTime?
+  scheduledDate       DateTime?
+  youtubeVideoUrl     String?
+  youtubeVideoId      String?
+  views               Int?         @default(0)
+  likes               Int?         @default(0)
+  comments            Int?         @default(0)
+  ctr                 Float?
+  rpm                 Float?
+  revenue             Float?
+  copyrightClaimStatus String?
+  seoScore            Int?
+  thumbnailScore      Int?
+  aiNotes             String?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  @@map("youtube_videos")
+}
+
+// Part 2 - Artwork & Image Generation
+model ArtworkItem {
+  id            String        @id @default(cuid())
+  songId        String?
+  song          Song?         @relation(fields: [songId], references: [id])
+  artworkType   String?
+  titleText     String?
+  prompt        String?
+  imageUrl      String?
+  designerId    String?
+  designer      User?         @relation("DesignerArtwork", fields: [designerId], references: [id])
+  status        ArtworkStatus @default(REQUESTED)
+  revisionCount Int           @default(0)
+  approvedById  String?
+  approvedBy    User?         @relation("ApproverArtwork", fields: [approvedById], references: [id])
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@map("artwork_items")
+}
+
+model CharacterProfile {
+  id                  String   @id @default(cuid())
+  characterName       String
+  characterType       String
+  description         String?
+  faceReferenceImage  String?
+  dressStyle          String?
+  jewelryStyle        String?
+  hairStyle           String?
+  skinTone            String?
+  expressionStyle     String?
+  poseStyle           String?
+  backgroundPreference String?
+  promptTemplate      String?
+  negativePrompt      String?
+  createdAt           DateTime @default(now())
+
+  @@map("character_profiles")
+}
+
+model BrandKit {
+  id              String   @id @default(cuid())
+  brandName       String
+  logoUrl         String?
+  primaryColor    String?
+  secondaryColor  String?
+  fontStyle       String?
+  thumbnailStyle  String?
+  devotionalStyle String?
+  rasiyaStyle     String?
+  textShadowStyle String?
+  borderStyle     String?
+  watermarkPosition String?
+  createdAt       DateTime @default(now())
+
+  @@map("brand_kits")
+}
+
+model ImageGeneration {
+  id             String   @id @default(cuid())
+  userId         String?
+  user           User?    @relation(fields: [userId], references: [id])
+  songId         String?
+  song           Song?    @relation(fields: [songId], references: [id])
+  prompt         String
+  negativePrompt String?
+  imageUrl       String?
+  imageType      String?
+  modelUsed      String?
+  seed           String?
+  aspectRatio    String?
+  status         String   @default("pending")
+  createdAt      DateTime @default(now())
+
+  @@map("image_generations")
+}
+
+model SeoGeneration {
+  id                   String   @id @default(cuid())
+  songId               String?
+  song                 Song?    @relation(fields: [songId], references: [id])
+  channelId            String?
+  generatedTitle       String?
+  generatedDescription String?
+  generatedTags        String[]
+  generatedHashtags    String[]
+  seoScore             Int?
+  aiNotes              String?
+  createdById          String?
+  createdBy            User?    @relation(fields: [createdById], references: [id])
+  createdAt            DateTime @default(now())
+
+  @@map("seo_generations")
+}
+
+model PromptLibrary {
+  id               String   @id @default(cuid())
+  title            String
+  category         String?
+  promptText       String
+  negativePrompt   String?
+  platform         String?
+  aspectRatio      String?
+  style            String?
+  performanceScore Int?
+  usedCount        Int      @default(0)
+  createdById      String?
+  createdAt        DateTime @default(now())
+
+  @@map("prompt_library")
+}
+
+model Asset {
+  id            String   @id @default(cuid())
+  assetName     String
+  assetType     String
+  category      String?
+  tags          String[]
+  fileUrl       String
+  previewUrl    String?
+  licenseStatus String?
+  usageRights   String?
+  uploadedById  String?
+  createdAt     DateTime @default(now())
+
+  @@map("assets")
+}
+
+model ThumbnailTest {
+  id                String   @id @default(cuid())
+  videoId           String?
+  thumbnailAId      String?
+  thumbnailBId      String?
+  testStartDate     DateTime?
+  testEndDate       DateTime?
+  ctrA              Float?
+  ctrB              Float?
+  winnerThumbnailId String?
+  aiAnalysis        String?
+
+  @@map("thumbnail_tests")
+}
+
+// ============================================================
+// Part 3A: Copyright Management System
+// ============================================================
+
+enum CopyrightAssetType {
+  AUDIO_MASTER
+  LYRICS
+  COMPOSITION
+  VIDEO
+  ARTWORK
+  THUMBNAIL
+  ALBUM_COVER
+  SHORT_AUDIO
+  REEL_AUDIO
+  LIVE_AUDIO
+  REMIX_AUDIO
+  KARAOKE
+  INSTRUMENTAL
+  FULL_SONG_PACKAGE
+}
+
+enum OwnershipStatus {
+  OWNED_BY_COMPANY
+  LICENSED_TO_COMPANY
+  PENDING_AGREEMENT
+  THIRD_PARTY_RIGHTS
+  SHARED_RIGHTS
+  DISPUTED
+  UNKNOWN
+}
+
+enum CopyrightStatus {
+  REGISTERED
+  NOT_REGISTERED
+  UNDER_REVIEW
+  CLAIM_ACTIVE
+  DMCA_ACTIVE
+  CR_DISPUTED
+  CR_RELEASED
+  BLOCKED
+  MONETIZED
+  PENDING_EVIDENCE
+}
+
+enum CaseType {
+  UNAUTHORIZED_UPLOAD
+  AUDIO_COPY
+  VIDEO_COPY
+  LYRICS_COPY
+  THUMBNAIL_COPY
+  REMIX_WITHOUT_PERMISSION
+  SHORTS_REUSE
+  FACEBOOK_REUPLOAD
+  INSTAGRAM_REEL_COPY
+  FAKE_CLAIM_AGAINST_US
+  COUNTER_CLAIM_RECEIVED
+  COPYRIGHT_STRIKE_RECEIVED
+  COPYRIGHT_STRIKE_SENT
+  DMCA_TAKEDOWN
+  DMCA_COUNTER_NOTICE
+  REVENUE_DISPUTE
+  OWNERSHIP_DISPUTE
+  ARTIST_DISPUTE
+  LABEL_DISPUTE
+  PLATFORM_REJECTION
+  SETTLEMENT_CASE
+}
+
+enum CasePriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+  CRITICAL
+}
+
+enum CaseStatus {
+  NEW
+  EVIDENCE_PENDING
+  EVIDENCE_READY
+  AI_REVIEW_DONE
+  MANUAL_REVIEW_PENDING
+  NOTICE_DRAFTED
+  NOTICE_SENT
+  PLATFORM_REVIEW
+  CLAIM_ACCEPTED
+  CLAIM_REJECTED
+  COUNTER_RECEIVED
+  LEGAL_ESCALATION
+  SETTLEMENT_DISCUSSION
+  CASE_RESOLVED
+  CASE_CLOSED
+  CASE_ARCHIVED
+}
+
+enum ClaimType {
+  YOUTUBE_COPYRIGHT_CLAIM
+  YOUTUBE_CONTENT_ID_CLAIM
+  YOUTUBE_MANUAL_CLAIM
+  YOUTUBE_STRIKE
+  FACEBOOK_RIGHTS_MANAGER_CLAIM
+  INSTAGRAM_RIGHTS_CLAIM
+  DMCA_NOTICE
+  EMAIL_NOTICE
+  LEGAL_NOTICE
+  PLATFORM_FORM_SUBMISSION
+  DISTRIBUTOR_CLAIM
+  CMS_CLAIM
+}
+
+enum ClaimAction {
+  MONETIZE
+  TRACK
+  BLOCK
+  TAKEDOWN
+  STRIKE
+  REQUEST_CREDIT
+  REQUEST_REVENUE_SHARE
+  REQUEST_REMOVAL
+  REQUEST_SETTLEMENT
+  MANUAL_REVIEW
+}
+
+enum EvidenceType {
+  SIGNED_AGREEMENT
+  STUDIO_INVOICE
+  RAW_AUDIO_FILE
+  PROJECT_FILE
+  LYRICS_FILE
+  VIDEO_PROJECT_FILE
+  THUMBNAIL_SOURCE_FILE
+  RELEASE_SCREENSHOT
+  YOUTUBE_UPLOAD_SCREENSHOT
+  YOUTUBE_STUDIO_SCREENSHOT
+  DISTRIBUTION_DASHBOARD_SCREENSHOT
+  ISRC_CERTIFICATE
+  UPC_CERTIFICATE
+  PAYMENT_PROOF
+  WHATSAPP_CHAT
+  EMAIL_PERMISSION
+  ARTIST_ID_PROOF
+  STUDIO_PERMISSION
+  COPYRIGHT_REGISTRATION
+  PLATFORM_CLAIM_SCREENSHOT
+  INFRINGING_URL_SCREENSHOT
+  SCREEN_RECORDING
+  AUDIO_FINGERPRINT_REPORT
+  AI_SIMILARITY_REPORT
+  METADATA_REPORT
+  DMCA_NOTICE_COPY
+  COUNTER_NOTICE_COPY
+  LEGAL_NOTICE_COPY
+}
+
+enum VerificationStatus {
+  UPLOADED
+  PENDING_REVIEW
+  VERIFIED
+  REJECTED
+  NEEDS_BETTER_COPY
+  EXPIRED
+  DUPLICATE
+}
+
+enum LegalWeight {
+  LOW_WEIGHT
+  MEDIUM_WEIGHT
+  HIGH_WEIGHT
+  CRITICAL_WEIGHT
+}
+
+enum RightType {
+  MASTER_RECORDING_RIGHT
+  LYRICS_RIGHT
+  COMPOSITION_RIGHT
+  PUBLISHING_RIGHT
+  VIDEO_RIGHT
+  ARTWORK_RIGHT
+  DISTRIBUTION_RIGHT
+  MONETIZATION_RIGHT
+  SYNC_RIGHT
+  PUBLIC_PERFORMANCE_RIGHT
+  MECHANICAL_RIGHT
+  DIGITAL_STREAMING_RIGHT
+  SOCIAL_MEDIA_RIGHT
+  YOUTUBE_CONTENT_ID_RIGHT
+  DMCA_ENFORCEMENT_RIGHT
+}
+
+enum DmcaStatus {
+  DMCA_DRAFT
+  DMCA_PENDING_REVIEW
+  DMCA_APPROVED
+  DMCA_SENT
+  DMCA_DELIVERED
+  DMCA_REJECTED
+  DMCA_RESPONDED
+  DMCA_COUNTER_RECEIVED
+  DMCA_RESOLVED
+  DMCA_WITHDRAWN
+}
+
+enum MatchType {
+  AUDIO_MATCH
+  LYRICS_MATCH
+  TITLE_MATCH
+  METADATA_MATCH
+  THUMBNAIL_MATCH
+  VIDEO_MATCH
+  MIXED_MATCH
+  POSSIBLE_FALSE_POSITIVE
+}
+
+enum RiskLevel {
+  RISK_LOW
+  RISK_MEDIUM
+  RISK_HIGH
+  RISK_CRITICAL
+}
+
+model CopyrightAsset {
+  id               String              @id @default(cuid())
+  assetCode        String              @unique
+  assetType        CopyrightAssetType
+  assetTitle       String
+  alternateTitles  String[]
+  language         String?
+  genre            String?
+  subGenre         String?
+  duration         Int?
+  isrcCode         String?
+  upcCode          String?
+  youtubeVideoId   String?
+  releaseDate      DateTime?
+  creationDate     DateTime?
+  recordingDate    DateTime?
+  labelName        String?
+  producerName     String?
+  primaryArtistId  String?
+  songId           String?
+  status           String              @default("active")
+  ownershipStatus  OwnershipStatus     @default(UNKNOWN)
+  copyrightStatus  CopyrightStatus     @default(NOT_REGISTERED)
+  createdById      String?
+  updatedById      String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  deletedAt        DateTime?
+
+  song             Song?               @relation(fields: [songId], references: [id])
+  primaryArtist    Client?             @relation(fields: [primaryArtistId], references: [id])
+  rights           CopyrightRight[]
+  evidence         CopyrightEvidence[]
+  cases            CopyrightCase[]
+  claims           CopyrightClaim[]
+  dmcaNotices      DmcaNotice[]
+  aiMatches        CopyrightAiMatch[]  @relation("SourceAssetMatches")
+  matchedBy        CopyrightAiMatch[]  @relation("MatchedAsset")
+
+  @@map("copyright_assets")
+}
+
+model CopyrightRight {
+  id                    String         @id @default(cuid())
+  assetId               String
+  rightType             RightType
+  rightOwnerType        String
+  rightOwnerId          String?
+  ownershipPercentage   Float?
+  territory             String?        @default("worldwide")
+  startDate             DateTime?
+  endDate               DateTime?
+  isExclusive           Boolean        @default(true)
+  isTransferable        Boolean        @default(false)
+  isSubLicensable       Boolean        @default(false)
+  revenueSharePercentage Float?
+  agreementId           String?
+  proofDocumentId       String?
+  status                String         @default("active")
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  asset                 CopyrightAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  agreement             CopyrightAgreement? @relation(fields: [agreementId], references: [id])
+
+  @@map("copyright_rights")
+}
+
+model CopyrightAgreement {
+  id                String    @id @default(cuid())
+  agreementCode     String    @unique
+  agreementType     String
+  assetId           String?
+  songId            String?
+  partyId           String?
+  companyId         String?
+  agreementTitle    String
+  agreementDate     DateTime?
+  effectiveDate     DateTime?
+  expiryDate        DateTime?
+  territory         String?   @default("India")
+  rightsAssigned    String[]
+  revenueShare      Float?
+  paymentTerms      String?
+  documentFileId    String?
+  signedStatus      String    @default("draft")
+  stampStatus       String?
+  notaryStatus      String?
+  witnessStatus     String?
+  legalReviewStatus String    @default("not_reviewed")
+  createdById       String?
+  approvedById      String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  rights            CopyrightRight[]
+
+  @@map("copyright_agreements")
+}
+
+model CopyrightEvidence {
+  id                 String             @id @default(cuid())
+  assetId            String?
+  caseId             String?
+  claimId            String?
+  evidenceType       EvidenceType
+  evidenceTitle      String
+  description        String?
+  fileId             String?
+  sourceUrl          String?
+  platform           String?
+  capturedAt         DateTime?
+  uploadedById       String?
+  hashValue          String?
+  isPrimaryEvidence  Boolean            @default(false)
+  verificationStatus VerificationStatus @default(UPLOADED)
+  legalWeight        LegalWeight        @default(MEDIUM_WEIGHT)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  asset              CopyrightAsset?    @relation(fields: [assetId], references: [id])
+  case               CopyrightCase?     @relation(fields: [caseId], references: [id])
+  claim              CopyrightClaim?    @relation(fields: [claimId], references: [id])
+
+  @@map("copyright_evidence")
+}
+
+model CopyrightCase {
+  id                String        @id @default(cuid())
+  caseCode          String        @unique
+  caseType          CaseType
+  assetId           String?
+  originalUrl       String?
+  infringingUrl     String?
+  platform          String?
+  infringerName     String?
+  infringerChannelId String?
+  infringerEmail    String?
+  caseTitle         String
+  caseDescription   String?
+  priority          CasePriority  @default(NORMAL)
+  status            CaseStatus    @default(NEW)
+  assignedToId      String?
+  legalOwner        String?
+  openedAt          DateTime      @default(now())
+  closedAt          DateTime?
+  lastActionAt      DateTime?
+  nextActionDueAt   DateTime?
+  createdById       String?
+  updatedById       String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  asset             CopyrightAsset? @relation(fields: [assetId], references: [id])
+  assignedTo        User?           @relation(fields: [assignedToId], references: [id])
+  evidence          CopyrightEvidence[]
+  claims            CopyrightClaim[]
+  dmcaNotices       DmcaNotice[]
+
+  @@map("copyright_cases")
+}
+
+model CopyrightClaim {
+  id                String      @id @default(cuid())
+  caseId            String?
+  assetId           String?
+  claimType         ClaimType
+  platform          String?
+  claimReferenceId  String?
+  targetUrl         String?
+  targetVideoId     String?
+  targetChannelId   String?
+  claimAction       ClaimAction @default(MONETIZE)
+  claimReason       String?
+  claimText         String?
+  submittedById     String?
+  submittedAt       DateTime?
+  responseStatus    String?
+  responseReceivedAt DateTime?
+  platformDecision  String?
+  decisionReason    String?
+  nextAction        String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  case              CopyrightCase? @relation(fields: [caseId], references: [id])
+  asset             CopyrightAsset? @relation(fields: [assetId], references: [id])
+  evidence          CopyrightEvidence[]
+
+  @@map("copyright_claims")
+}
+
+model DmcaNotice {
+  id                      String     @id @default(cuid())
+  caseId                  String?
+  assetId                 String?
+  noticeCode              String     @unique
+  platform                String?
+  recipientName           String?
+  recipientEmail          String?
+  recipientAddress        String?
+  copyrightOwnerName      String?
+  authorizedPersonName    String?
+  noticeSubject           String?
+  noticeBody              String?
+  originalWorkDescription String?
+  originalWorkUrl         String?
+  infringingWorkUrl       String?
+  goodFaithStatement      String?
+  accuracyStatement       String?
+  signatureName           String?
+  signatureDate           DateTime?
+  status                  DmcaStatus @default(DMCA_DRAFT)
+  generatedByAi           Boolean    @default(false)
+  reviewedById            String?
+  sentById                String?
+  sentAt                  DateTime?
+  createdAt               DateTime   @default(now())
+  updatedAt               DateTime   @updatedAt
+
+  case                    CopyrightCase? @relation(fields: [caseId], references: [id])
+  asset                   CopyrightAsset? @relation(fields: [assetId], references: [id])
+
+  @@map("dmca_notices")
+}
+
+model CopyrightAiMatch {
+  id                      String    @id @default(cuid())
+  assetId                 String?
+  sourceAssetId           String?
+  matchedUrl              String?
+  matchedPlatform         String?
+  matchType               MatchType
+  matchScore              Float?
+  audioSimilarityScore    Float?
+  lyricsSimilarityScore   Float?
+  titleSimilarityScore    Float?
+  metadataSimilarityScore Float?
+  thumbnailSimilarityScore Float?
+  videoSimilarityScore    Float?
+  aiSummary               String?
+  riskLevel               RiskLevel @default(RISK_LOW)
+  recommendedAction       String?
+  reviewStatus            String?   @default("pending")
+  reviewedById            String?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  asset                   CopyrightAsset? @relation("SourceAssetMatches", fields: [assetId], references: [id])
+  sourceAsset             CopyrightAsset? @relation("MatchedAsset", fields: [sourceAssetId], references: [id])
+
+  @@map("copyright_ai_matches")
+}
+
+model CopyrightAuditLog {
+  id          String   @id @default(cuid())
+  entityType  String
+  entityId    String
+  action      String
+  oldValue    String?
+  newValue    String?
+  userId      String?
+  userEmail   String?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  @@map("copyright_audit_logs")
+}
+
+// ============================================================
+// Part 4A: Finance Management System
+// ============================================================
+
+enum FinanceAccountType {
+  BANK
+  CASH
+  WALLET
+  PAYMENT_GATEWAY
+  PLATFORM_WALLET
+}
+
+enum IncomeStatus {
+  INCOME_DRAFT
+  INCOME_PENDING
+  INCOME_RECEIVED
+  PARTIALLY_RECEIVED
+  INCOME_CANCELLED
+  INCOME_REFUNDED
+  INCOME_ADJUSTED
+  INCOME_UNDER_REVIEW
+}
+
+enum ExpenseStatus {
+  EXPENSE_DRAFT
+  PENDING_APPROVAL
+  EXPENSE_APPROVED
+  EXPENSE_REJECTED
+  EXPENSE_PAID
+  PARTIALLY_PAID
+  EXPENSE_CANCELLED
+  EXPENSE_ADJUSTED
+}
+
+enum InvoiceStatus {
+  INV_DRAFT
+  INV_SENT
+  INV_VIEWED
+  INV_PARTIALLY_PAID
+  INV_PAID
+  INV_OVERDUE
+  INV_CANCELLED
+  INV_REFUNDED
+}
+
+enum PaymentType {
+  ARTIST_PAYMENT
+  STUDIO_PAYMENT
+  VENDOR_PAYMENT
+  SALARY_PAYMENT
+  ROYALTY_PAYMENT
+  ADVANCE_PAYMENT
+  SETTLEMENT_PAYMENT
+  REFUND_PAYMENT
+}
+
+enum TransactionType {
+  TXN_INCOME
+  TXN_EXPENSE
+  TXN_TRANSFER
+  TXN_ADJUSTMENT
+  TXN_OPENING_BALANCE
+  TXN_REFUND
+  TXN_TAX_PAYMENT
+}
+
+enum GstEntryType {
+  OUTPUT_GST
+  INPUT_GST
+  GST_PAYMENT_ENTRY
+  GST_ADJUSTMENT
+}
+
+model FinanceAccount {
+  id              String             @id @default(cuid())
+  companyId       String?
+  accountType     FinanceAccountType
+  accountName     String
+  bankName        String?
+  accountNumber   String?
+  ifscCode        String?
+  upiId           String?
+  walletProvider  String?
+  openingBalance  Float              @default(0)
+  currentBalance  Float              @default(0)
+  currency        String             @default("INR")
+  status          String             @default("active")
+  createdById     String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  incomes         FinanceIncome[]
+  expenses        FinanceExpense[]
+  transactions    FinanceTransaction[]
+  invoiceReceipts FinanceReceipt[]
+  payments        FinancePayment[]
+
+  @@map("finance_accounts")
+}
+
+model FinanceIncome {
+  id              String       @id @default(cuid())
+  companyId       String?
+  incomeCode      String       @unique
+  incomeTitle     String
+  incomeSource    String
+  clientId        String?
+  platformId      String?
+  songId          String?
+  projectId       String?
+  invoiceId       String?
+  amount          Float
+  gstAmount       Float?       @default(0)
+  tdsAmount       Float?       @default(0)
+  netAmount       Float
+  currency        String       @default("INR")
+  incomeDate      DateTime
+  receivedDate    DateTime?
+  paymentMode     String?
+  accountId       String?
+  transactionId   String?
+  referenceNumber String?
+  status          IncomeStatus @default(INCOME_PENDING)
+  notes           String?
+  createdById     String?
+  approvedById    String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  account         FinanceAccount? @relation(fields: [accountId], references: [id])
+
+  @@map("finance_income")
+}
+
+model FinanceExpense {
+  id               String        @id @default(cuid())
+  companyId        String?
+  expenseCode      String        @unique
+  expenseTitle     String
+  expenseCategory  String
+  vendorId         String?
+  artistId         String?
+  studioId         String?
+  songId           String?
+  projectId        String?
+  amount           Float
+  gstAmount        Float?        @default(0)
+  tdsAmount        Float?        @default(0)
+  netAmount        Float
+  expenseDate      DateTime
+  paidDate         DateTime?
+  paymentMode      String?
+  accountId        String?
+  transactionId    String?
+  approvalStatus   ExpenseStatus @default(EXPENSE_DRAFT)
+  paymentStatus    String?       @default("unpaid")
+  billNumber       String?
+  invoiceNumber    String?
+  referenceNumber  String?
+  notes            String?
+  createdById      String?
+  approvedById     String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  account          FinanceAccount? @relation(fields: [accountId], references: [id])
+
+  @@map("finance_expenses")
+}
+
+model FinanceInvoice {
+  id              String        @id @default(cuid())
+  companyId       String?
+  invoiceNumber   String        @unique
+  invoiceType     String
+  clientId        String?
+  invoiceDate     DateTime
+  dueDate         DateTime?
+  placeOfSupply   String?
+  subtotal        Float
+  discountAmount  Float?        @default(0)
+  taxableAmount   Float
+  cgstAmount      Float?        @default(0)
+  sgstAmount      Float?        @default(0)
+  igstAmount      Float?        @default(0)
+  totalGst        Float?        @default(0)
+  grandTotal      Float
+  paidAmount      Float?        @default(0)
+  balanceAmount   Float?
+  status          InvoiceStatus @default(INV_DRAFT)
+  pdfFileId       String?
+  createdById     String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  receipts        FinanceReceipt[]
+  items           FinanceInvoiceItem[]
+
+  @@map("finance_invoices")
+}
+
+model FinanceInvoiceItem {
+  id              String  @id @default(cuid())
+  invoiceId       String
+  description     String
+  hsnSacCode      String?
+  quantity        Float   @default(1)
+  rate            Float
+  amount          Float
+  discount        Float?  @default(0)
+  taxableAmount   Float
+  gstRate         Float?
+  gstAmount       Float?  @default(0)
+
+  invoice         FinanceInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("finance_invoice_items")
+}
+
+model FinanceReceipt {
+  id              String   @id @default(cuid())
+  companyId       String?
+  receiptNumber   String   @unique
+  clientId        String?
+  invoiceId       String?
+  receiptDate     DateTime
+  amountReceived  Float
+  paymentMode     String?
+  accountId       String?
+  transactionId   String?
+  balanceAmount   Float?   @default(0)
+  purpose         String?
+  pdfFileId       String?
+  createdById     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  invoice         FinanceInvoice? @relation(fields: [invoiceId], references: [id])
+  account         FinanceAccount? @relation(fields: [accountId], references: [id])
+
+  @@map("finance_receipts")
+}
+
+model FinancePayment {
+  id              String      @id @default(cuid())
+  companyId       String?
+  paymentCode     String      @unique
+  paymentType     PaymentType
+  payeeType       String
+  payeeId         String?
+  songId          String?
+  projectId       String?
+  agreementId     String?
+  grossAmount     Float
+  tdsAmount       Float?      @default(0)
+  gstAmount       Float?      @default(0)
+  netAmount       Float
+  paidAmount      Float?      @default(0)
+  pendingAmount   Float?
+  dueDate         DateTime?
+  paidDate        DateTime?
+  paymentMode     String?
+  accountId       String?
+  status          String      @default("pending")
+  proofFileId     String?
+  createdById     String?
+  approvedById    String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  account         FinanceAccount? @relation(fields: [accountId], references: [id])
+
+  @@map("finance_payments")
+}
+
+model FinanceTransaction {
+  id              String          @id @default(cuid())
+  companyId       String?
+  transactionCode String          @unique
+  transactionType TransactionType
+  accountId       String?
+  relatedModule   String?
+  relatedId       String?
+  debitAmount     Float?          @default(0)
+  creditAmount    Float?          @default(0)
+  balanceAfter    Float?
+  transactionDate DateTime
+  description     String?
+  referenceNumber String?
+  createdById     String?
+  createdAt       DateTime        @default(now())
+
+  account         FinanceAccount? @relation(fields: [accountId], references: [id])
+
+  @@map("finance_transactions")
+}
+
+model FinanceGstEntry {
+  id              String       @id @default(cuid())
+  companyId       String?
+  entryType       GstEntryType
+  sourceModule    String?
+  sourceId        String?
+  gstType         String?
+  taxableAmount   Float
+  cgstRate        Float?       @default(0)
+  cgstAmount      Float?       @default(0)
+  sgstRate        Float?       @default(0)
+  sgstAmount      Float?       @default(0)
+  igstRate        Float?       @default(0)
+  igstAmount      Float?       @default(0)
+  totalGst        Float
+  gstMonth        Int?
+  gstYear         Int?
+  status          String       @default("pending")
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@map("finance_gst_entries")
+}
+
+model FinanceAuditLog {
+  id          String   @id @default(cuid())
+  companyId   String?
+  userId      String?
+  module      String
+  entityType  String
+  entityId    String
+  action      String
+  oldValue    String?
+  newValue    String?
+  ipAddress   String?
+  deviceInfo  String?
+  createdAt   DateTime @default(now())
+
+  @@map("finance_audit_logs")
+}
+
+// ============================================================
+// Part 5A & 6A: Automation, Chat, Attendance, Portals
+// ============================================================
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  HALF_DAY
+  LATE
+  ON_LEAVE
+  WORK_FROM_HOME
+  FIELD_WORK
+  ATT_PENDING_APPROVAL
+  ATT_REJECTED
+}
+
+enum ChatMessageType {
+  TEXT
+  IMAGE
+  FILE_MSG
+  VOICE
+  SYSTEM_MSG
+  RECORD_LINK
+}
+
+model AutomationRule {
+  id              String   @id @default(cuid())
+  companyId       String?
+  ruleName        String
+  description     String?
+  triggerType     String
+  triggerConfig   String?
+  actionType      String
+  actionConfig    String?
+  isActive        Boolean  @default(true)
+  lastTriggeredAt DateTime?
+  createdById     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("automation_rules")
+}
+
+model AutomationLog {
+  id          String   @id @default(cuid())
+  ruleId      String?
+  triggerData String?
+  actionData  String?
+  status      String   @default("success")
+  error       String?
+  executedAt  DateTime @default(now())
+
+  @@map("automation_logs")
+}
+
+model ChatThread {
+  id              String   @id @default(cuid())
+  companyId       String?
+  threadType      String
+  threadTitle     String?
+  relatedModule   String?
+  relatedEntityId String?
+  createdById     String?
+  status          String   @default("active")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  participants    ChatParticipant[]
+  messages        ChatMessage[]
+
+  @@map("chat_threads")
+}
+
+model ChatParticipant {
+  id              String    @id @default(cuid())
+  threadId        String
+  userId          String
+  participantType String    @default("member")
+  joinedAt        DateTime  @default(now())
+  lastReadAt      DateTime?
+  status          String    @default("active")
+
+  thread          ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@map("chat_participants")
+}
+
+model ChatMessage {
+  id              String          @id @default(cuid())
+  threadId        String
+  senderId        String
+  messageType     ChatMessageType @default(TEXT)
+  messageText     String?
+  fileId          String?
+  replyToMessageId String?
+  isDeleted       Boolean         @default(false)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  thread          ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+}
+
+model AttendanceRecord {
+  id                String           @id @default(cuid())
+  companyId         String?
+  staffId           String
+  attendanceDate    DateTime
+  checkInTime       DateTime?
+  checkOutTime      DateTime?
+  breakMinutes      Int?             @default(0)
+  workingMinutes    Int?
+  checkInLatitude   Float?
+  checkInLongitude  Float?
+  checkOutLatitude  Float?
+  checkOutLongitude Float?
+  selfieFileId      String?
+  qrCodeId          String?
+  deviceId          String?
+  status            AttendanceStatus @default(PRESENT)
+  approvalStatus    String?          @default("approved")
+  notes             String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@map("attendance_records")
+}
+
+model GpsLog {
+  id              String   @id @default(cuid())
+  companyId       String?
+  userId          String
+  relatedModule   String?
+  relatedEntityId String?
+  latitude        Float
+  longitude       Float
+  accuracy        Float?
+  address         String?
+  deviceId        String?
+  capturedAt      DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  @@map("gps_logs")
+}
+
+model MobileDevice {
+  id          String    @id @default(cuid())
+  userId      String
+  deviceType  String
+  deviceName  String?
+  deviceOs    String?
+  deviceToken String?
+  appVersion  String?
+  lastLoginAt DateTime?
+  lastIp      String?
+  status      String    @default("active")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("mobile_devices")
+}
+
+model PushNotification {
+  id               String    @id @default(cuid())
+  companyId        String?
+  userId           String
+  deviceId         String?
+  notificationType String
+  title            String
+  body             String
+  relatedModule    String?
+  relatedEntityId  String?
+  status           String    @default("pending")
+  sentAt           DateTime?
+  readAt           DateTime?
+  createdAt        DateTime  @default(now())
+
+  @@map("push_notifications")
+}
+
+model QrCode {
+  id              String    @id @default(cuid())
+  companyId       String?
+  qrCode          String    @unique
+  qrType          String
+  relatedModule   String?
+  relatedEntityId String?
+  expiresAt       DateTime?
+  scanCount       Int       @default(0)
+  status          String    @default("active")
+  createdById     String?
+  createdAt       DateTime  @default(now())
+
+  @@map("qr_codes")
+}
+
+model DigitalSignature {
+  id              String   @id @default(cuid())
+  companyId       String?
+  documentType    String
+  documentId      String
+  signerUserId    String?
+  signerName      String
+  signerRole      String?
+  signatureMethod String
+  signatureFileId String?
+  otpVerified     Boolean  @default(false)
+  ipAddress       String?
+  deviceInfo      String?
+  signedAt        DateTime @default(now())
+  status          String   @default("signed")
+  createdAt       DateTime @default(now())
+
+  @@map("digital_signatures")
+}
