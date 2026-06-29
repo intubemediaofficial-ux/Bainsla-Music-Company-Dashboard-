@@ -3,6 +3,11 @@ import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 
 export async function GET() {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const clients = await prisma.client.findMany({
     orderBy: { createdAt: "desc" },
     include: {
@@ -19,6 +24,13 @@ export async function POST(req: NextRequest) {
   }
 
   const data = await req.json();
+
+  if (!data.name || typeof data.name !== "string" || data.name.trim().length === 0) {
+    return NextResponse.json({ error: "name is required" }, { status: 400 });
+  }
+  if (!data.clientType || typeof data.clientType !== "string") {
+    return NextResponse.json({ error: "clientType is required" }, { status: 400 });
+  }
 
   const client = await prisma.client.create({
     data: {

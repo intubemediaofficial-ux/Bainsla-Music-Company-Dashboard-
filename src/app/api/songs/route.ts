@@ -3,6 +3,11 @@ import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 
 export async function GET() {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const songs = await prisma.song.findMany({
     orderBy: { createdAt: "desc" },
     include: {
@@ -21,6 +26,10 @@ export async function POST(req: NextRequest) {
   }
 
   const data = await req.json();
+
+  if (!data.songTitle || typeof data.songTitle !== "string" || data.songTitle.trim().length === 0) {
+    return NextResponse.json({ error: "songTitle is required" }, { status: 400 });
+  }
 
   const song = await prisma.song.create({
     data: {
@@ -54,7 +63,7 @@ export async function POST(req: NextRequest) {
   await prisma.songStatusHistory.create({
     data: {
       songId: song.id,
-      newStatus: "IDEA",
+      newStatus: song.currentStage,
       changedBy: session.id,
       note: "Song created",
     },

@@ -375,7 +375,6 @@ async function main() {
   });
 
   console.log("Seed completed successfully!");
-  console.log("Login: admin@bainslamusic.com / admin123");
 }
 
 main()
