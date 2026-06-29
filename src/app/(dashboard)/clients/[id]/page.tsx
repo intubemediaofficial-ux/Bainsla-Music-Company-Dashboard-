@@ -26,6 +26,8 @@ export default async function ClientProfilePage({ params }: PageProps) {
   const totalSongs = client.songsAsSinger.length + client.songParticipants.length;
   const releasedSongs = client.songsAsSinger.filter(
     (s) => s.releaseStatus === "released"
+  ).length + client.songParticipants.filter(
+    (p) => p.song.releaseStatus === "released"
   ).length;
 
   return (

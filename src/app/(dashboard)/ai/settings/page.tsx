@@ -65,7 +65,7 @@ export default function AiSettingsPage() {
               <Label>API Key</Label>
               <Input name="apiKey" type="password" placeholder="sk-..." />
               <p className="text-xs text-muted-foreground">
-                Your API key is encrypted and stored securely.
+                Your API key is stored server-side and never exposed to the client.
               </p>
             </div>
             <div className="space-y-2">
