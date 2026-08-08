@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
-import { createToken } from "@/lib/auth";
+import { createToken, homePathForRole } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       where: { email },
     });
 
-    if (!user) {
+    if (!user || user.status !== "active") {
       return NextResponse.json(
         { error: "Invalid email or password" },
         { status: 401 }
@@ -43,10 +43,12 @@ export async function POST(req: NextRequest) {
       name: user.name,
       email: user.email,
       role: user.role,
+      clientId: user.clientId,
     });
 
     const response = NextResponse.json({
       success: true,
+      redirectTo: homePathForRole(user.role),
       user: {
         id: user.id,
         name: user.name,

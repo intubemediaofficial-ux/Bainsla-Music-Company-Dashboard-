@@ -1,98 +1,55 @@
 "use client";
 
-import { useState } from "react";
-import { AlertTriangle, Plus, Search, Bot, Send } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Mail } from "lucide-react";
+import { ResourceManager, type FieldDef, type ColumnDef } from "@/components/resource-manager";
+
+const STATUSES = [
+  "DMCA_DRAFT", "DMCA_PENDING_REVIEW", "DMCA_APPROVED", "DMCA_SENT", "DMCA_DELIVERED",
+  "DMCA_REJECTED", "DMCA_RESPONDED", "DMCA_COUNTER_RECEIVED", "DMCA_RESOLVED", "DMCA_WITHDRAWN",
+].map((value) => ({ value, label: value.replace("DMCA_", "").replaceAll("_", " ") }));
+
+const fields: FieldDef[] = [
+  { name: "noticeSubject", label: "Notice Subject", required: true, span: 2, placeholder: "Copyright infringement notice for..." },
+  { name: "status", label: "Status", type: "select", options: STATUSES, defaultValue: "DMCA_DRAFT" },
+  { name: "platform", label: "Platform", type: "select", options: ["YouTube", "Facebook", "Instagram", "Google", "Hosting Provider", "Other"] },
+  { name: "recipientName", label: "Recipient Name", placeholder: "Platform / host legal team" },
+  { name: "recipientEmail", label: "Recipient Email", placeholder: "copyright@platform.com" },
+  { name: "caseId", label: "Case ID", placeholder: "Linked case (optional)" },
+  { name: "assetId", label: "Asset ID", placeholder: "Linked asset (optional)" },
+  { name: "copyrightOwnerName", label: "Copyright Owner", defaultValue: "Bainsla Music" },
+  { name: "authorizedPersonName", label: "Authorized Person", placeholder: "Name of signatory" },
+  { name: "originalWorkUrl", label: "Original Work URL", placeholder: "https://" },
+  { name: "infringingWorkUrl", label: "Infringing Work URL", placeholder: "https://" },
+  { name: "signatureName", label: "Signature Name", placeholder: "Full name" },
+  { name: "signatureDate", label: "Signature Date", type: "date" },
+  { name: "originalWorkDescription", label: "Original Work Description", type: "textarea", span: 3 },
+  { name: "noticeBody", label: "Notice Body", type: "textarea", span: 3 },
+  { name: "recipientAddress", label: "Recipient Address", type: "textarea", span: 3 },
+];
+
+const columns: ColumnDef[] = [
+  { key: "noticeCode", label: "Notice" },
+  { key: "noticeSubject", label: "Subject" },
+  { key: "platform", label: "Platform" },
+  { key: "recipientEmail", label: "Recipient" },
+  { key: "infringingWorkUrl", label: "Infringing URL" },
+  { key: "status", label: "Status", format: "enum" },
+  { key: "signatureDate", label: "Signed", format: "date" },
+];
 
 export default function DmcaPage() {
-  const [showForm, setShowForm] = useState(false);
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">DMCA Notices</h1>
-          <p className="text-muted-foreground">Generate, send, and track DMCA takedown notices</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2"><Bot className="h-4 w-4" /> AI Generate</Button>
-          <Button onClick={() => setShowForm(!showForm)} className="gap-2"><Plus className="h-4 w-4" /> New DMCA</Button>
-        </div>
-      </div>
-
-      {showForm && (
-        <Card>
-          <CardHeader><CardTitle>Draft DMCA Notice</CardTitle></CardHeader>
-          <CardContent>
-            <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium">Platform *</label>
-                <select className="w-full h-9 rounded-md border px-3 text-sm bg-background">
-                  <option>YouTube</option>
-                  <option>Facebook</option>
-                  <option>Instagram</option>
-                  <option>Other</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Recipient Name</label>
-                <Input placeholder="Channel/page owner name" />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Recipient Email</label>
-                <Input type="email" placeholder="email@example.com" />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Copyright Owner *</label>
-                <Input defaultValue="Bainsla Music Pvt. Ltd." />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Original Work URL *</label>
-                <Input placeholder="URL of your original content" />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Infringing Work URL *</label>
-                <Input placeholder="URL of infringing content" />
-              </div>
-              <div className="md:col-span-2">
-                <label className="text-sm font-medium">Original Work Description</label>
-                <textarea className="w-full min-h-[60px] rounded-md border px-3 py-2 text-sm bg-background" placeholder="Describe your original work..." />
-              </div>
-              <div className="md:col-span-2">
-                <label className="text-sm font-medium">Notice Body</label>
-                <textarea className="w-full min-h-[120px] rounded-md border px-3 py-2 text-sm bg-background" placeholder="DMCA notice content... (AI can generate this)" />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Signature Name *</label>
-                <Input placeholder="Authorized person name" />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Signature Date</label>
-                <Input type="date" />
-              </div>
-              <div className="md:col-span-2 flex gap-3">
-                <Button type="button">Save Draft</Button>
-                <Button type="button" variant="outline" className="gap-2"><Bot className="h-4 w-4" /> AI Generate Notice</Button>
-                <Button type="button" variant="outline" className="gap-2"><Send className="h-4 w-4" /> Send Notice</Button>
-                <Button type="button" variant="ghost" onClick={() => setShowForm(false)}>Cancel</Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
-
-      <Card>
-        <CardContent className="p-6 text-center py-8">
-          <AlertTriangle className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
-          <h3 className="font-medium mb-1">DMCA Notice Management</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Draft, review, and send DMCA takedown notices. AI can auto-generate legally compliant notices. Track delivery status, responses, and counter-notices.
-          </p>
-          <Button onClick={() => setShowForm(true)} className="gap-2"><Plus className="h-4 w-4" /> Draft First DMCA Notice</Button>
-        </CardContent>
-      </Card>
-    </div>
+    <ResourceManager
+      title="DMCA Notices"
+      description="Draft, review, send and track DMCA takedown notices"
+      endpoint="/api/copyright/dmca"
+      addLabel="Draft DMCA Notice"
+      icon={Mail}
+      fields={fields}
+      columns={columns}
+      searchKeys={["noticeCode", "noticeSubject", "platform", "status"]}
+      emptyTitle="DMCA Register"
+      emptyDescription="Create a complete DMCA notice — recipient, original work, infringing work, good faith statement and signature — then track its status until resolution."
+    />
   );
 }

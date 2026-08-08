@@ -18,11 +18,18 @@ export interface SessionUser {
   email: string;
   role: string;
   avatarUrl?: string | null;
+  clientId?: string | null;
 }
 
 export async function createToken(user: SessionUser): Promise<string> {
   return jwt.sign(
-    { id: user.id, email: user.email, role: user.role, name: user.name },
+    {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      name: user.name,
+      clientId: user.clientId ?? null,
+    },
     JWT_SECRET,
     { expiresIn: "7d" }
   );
@@ -66,6 +73,11 @@ export function hasPermission(
   allowedRoles: string[]
 ): boolean {
   return allowedRoles.includes(userRole);
+}
+
+/** Landing page for a role after login: portal users never see the staff dashboard. */
+export function homePathForRole(role: string): string {
+  return role === "ARTIST_CLIENT" ? "/artist" : "/dashboard";
 }
 
 export const ADMIN_ROLES = ["SUPER_ADMIN", "ADMIN", "MANAGER"];

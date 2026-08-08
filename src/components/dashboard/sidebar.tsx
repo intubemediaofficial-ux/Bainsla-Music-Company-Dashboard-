@@ -31,6 +31,7 @@ import {
   IndianRupee,
   MessageSquare,
   Zap,
+  Clock,
 } from "lucide-react";
 
 const sidebarItems = [
@@ -56,6 +57,7 @@ const sidebarItems = [
   { title: "Analytics", href: "/analytics", icon: BarChart3 },
   { title: "Reports", href: "/reports", icon: BarChart3 },
   { title: "Tasks", href: "/tasks", icon: CheckSquare },
+  { title: "Attendance", href: "/attendance", icon: Clock },
   { title: "Calendar", href: "/calendar", icon: Calendar },
   { title: "Chat", href: "/chat", icon: MessageSquare },
   { title: "Files", href: "/files", icon: FolderOpen },

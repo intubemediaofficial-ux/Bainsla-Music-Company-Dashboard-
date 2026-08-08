@@ -1,31 +1,48 @@
-import { Globe, Music, TrendingUp } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+"use client";
+
+import { Globe } from "lucide-react";
+import { ResourceManager, type FieldDef, type ColumnDef } from "@/components/resource-manager";
+
+const PLATFORMS = "Spotify, Apple Music, JioSaavn, Wynk, Gaana, Amazon Music, YouTube Music, Instagram, Facebook, Resso";
+
+const fields: FieldDef[] = [
+  { name: "releaseTitle", label: "Release Title", required: true, placeholder: "Song / album title" },
+  { name: "distributor", label: "Distributor", type: "select", options: ["Believe", "TuneCore", "DistroKid", "CD Baby", "Hungama", "Times Music", "In-house CMS", "Other"] },
+  { name: "releaseDate", label: "Release Date", type: "date" },
+  { name: "liveDate", label: "Live Date", type: "date" },
+  { name: "isrc", label: "ISRC", placeholder: "ISRC code" },
+  { name: "upc", label: "UPC", placeholder: "UPC code" },
+  { name: "revenueShare", label: "Revenue Share (%)", type: "number", placeholder: "e.g. 70" },
+  { name: "songId", label: "Song ID", placeholder: "Linked song (optional)" },
+  { name: "status", label: "Status", type: "select", options: ["draft", "submitted", "in_review", "live", "rejected", "taken_down"], defaultValue: "draft" },
+  { name: "platforms", label: "Platforms", span: 3, placeholder: PLATFORMS },
+  { name: "notes", label: "Notes", type: "textarea", span: 3 },
+];
+
+const columns: ColumnDef[] = [
+  { key: "releaseCode", label: "Code" },
+  { key: "releaseTitle", label: "Title" },
+  { key: "distributor", label: "Distributor" },
+  { key: "releaseDate", label: "Release", format: "date" },
+  { key: "liveDate", label: "Live", format: "date" },
+  { key: "isrc", label: "ISRC" },
+  { key: "upc", label: "UPC" },
+  { key: "status", label: "Status", format: "enum" },
+];
 
 export default function DistributionPage() {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Distribution</h1>
-          <p className="text-muted-foreground">
-            Manage song distribution across all platforms
-          </p>
-        </div>
-        <Button className="gap-2">
-          <Globe className="h-4 w-4" /> New Release
-        </Button>
-      </div>
-
-      <Card>
-        <CardContent className="p-8 text-center">
-          <Globe className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
-          <h3 className="font-medium mb-1">Distribution Hub</h3>
-          <p className="text-sm text-muted-foreground">
-            Submit songs to Spotify, Apple Music, JioSaavn, Amazon Music, YouTube Music, and more. Track release status, ISRC/UPC codes, and platform links.
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+    <ResourceManager
+      title="Distribution"
+      description="Submit and track releases across Spotify, Apple Music, JioSaavn, Amazon & more"
+      endpoint="/api/distribution"
+      addLabel="New Release"
+      icon={Globe}
+      fields={fields}
+      columns={columns}
+      searchKeys={["releaseCode", "releaseTitle", "distributor", "status", "isrc"]}
+      emptyTitle="Distribution Hub"
+      emptyDescription="Create a release, list the platforms, store ISRC/UPC and track it from submission to live."
+    />
   );
 }
