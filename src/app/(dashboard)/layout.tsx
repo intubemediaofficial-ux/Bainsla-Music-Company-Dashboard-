@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
+import { ALL_STAFF_ROLES, getSession, hasPermission, homePathForRole } from "@/lib/auth";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { Topbar } from "@/components/dashboard/topbar";
 
@@ -12,6 +12,10 @@ export default async function DashboardLayout({
 
   if (!session) {
     redirect("/login");
+  }
+
+  if (!hasPermission(session.role, ALL_STAFF_ROLES)) {
+    redirect(homePathForRole(session.role));
   }
 
   return (

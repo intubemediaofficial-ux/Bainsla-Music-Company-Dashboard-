@@ -1,94 +1,62 @@
 "use client";
 
-import { IndianRupee, FileText, Download, Calculator } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { IndianRupee } from "lucide-react";
+import { ResourceManager, type FieldDef, type ColumnDef } from "@/components/resource-manager";
 
-export default function GstTaxPage() {
-  const gstStats = [
-    { label: "Output GST", value: "₹0", color: "text-red-500" },
-    { label: "Input GST", value: "₹0", color: "text-green-500" },
-    { label: "GST Payable", value: "₹0", color: "text-amber-500" },
-    { label: "GST Credit Available", value: "₹0", color: "text-blue-500" },
-    { label: "B2B Sales", value: "₹0", color: "text-purple-500" },
-    { label: "B2C Sales", value: "₹0", color: "text-cyan-500" },
-  ];
+const ENTRY_TYPES = [
+  { value: "OUTPUT_GST", label: "Output GST (on sales)" },
+  { value: "INPUT_GST", label: "Input GST (on purchases)" },
+  { value: "GST_PAYMENT_ENTRY", label: "GST Payment" },
+  { value: "GST_ADJUSTMENT", label: "GST Adjustment" },
+];
 
-  const tdsStats = [
-    { label: "TDS Deducted by Clients", value: "₹0" },
-    { label: "TDS Deducted on Artist Payments", value: "₹0" },
-    { label: "TDS Deducted on Vendor Payments", value: "₹0" },
-    { label: "TDS Certificates Pending", value: "0" },
-  ];
+const MONTHS = Array.from({ length: 12 }, (_, i) => ({
+  value: String(i + 1),
+  label: new Date(2000, i, 1).toLocaleString("en-IN", { month: "long" }),
+}));
 
+const fields: FieldDef[] = [
+  { name: "entryType", label: "Entry Type", type: "select", options: ENTRY_TYPES, required: true },
+  { name: "gstType", label: "GST Type", type: "select", options: ["CGST+SGST", "IGST", "Exempt", "Nil Rated"] },
+  { name: "taxableAmount", label: "Taxable Amount (₹)", type: "number", required: true, placeholder: "0.00" },
+  { name: "cgstRate", label: "CGST Rate (%)", type: "number", placeholder: "9" },
+  { name: "cgstAmount", label: "CGST Amount (₹)", type: "number", placeholder: "0.00" },
+  { name: "sgstRate", label: "SGST Rate (%)", type: "number", placeholder: "9" },
+  { name: "sgstAmount", label: "SGST Amount (₹)", type: "number", placeholder: "0.00" },
+  { name: "igstRate", label: "IGST Rate (%)", type: "number", placeholder: "18" },
+  { name: "igstAmount", label: "IGST Amount (₹)", type: "number", placeholder: "0.00" },
+  { name: "gstMonth", label: "GST Month", type: "select", options: MONTHS },
+  { name: "gstYear", label: "GST Year", type: "number", placeholder: "2026" },
+  { name: "sourceModule", label: "Source", type: "select", options: ["Invoice", "Income", "Expense", "Manual"] },
+  { name: "status", label: "Status", type: "select", options: ["pending", "filed", "paid"], defaultValue: "pending" },
+];
+
+const columns: ColumnDef[] = [
+  { key: "entryType", label: "Entry", format: "enum" },
+  { key: "gstType", label: "GST Type" },
+  { key: "taxableAmount", label: "Taxable", format: "currency" },
+  { key: "cgstAmount", label: "CGST", format: "currency" },
+  { key: "sgstAmount", label: "SGST", format: "currency" },
+  { key: "igstAmount", label: "IGST", format: "currency" },
+  { key: "totalGst", label: "Total GST", format: "currency" },
+  { key: "gstMonth", label: "Month", format: "number" },
+  { key: "gstYear", label: "Year", format: "number" },
+  { key: "status", label: "Status" },
+];
+
+export default function GstPage() {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">GST & Tax Management</h1>
-          <p className="text-muted-foreground">GST calculation, TDS tracking, tax reports & compliance</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2"><Download className="h-4 w-4" /> Export GSTR Summary</Button>
-          <Button className="gap-2"><Calculator className="h-4 w-4" /> GST Calculator</Button>
-        </div>
-      </div>
-
-      <Card>
-        <CardHeader><CardTitle>GST Summary</CardTitle></CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {gstStats.map((stat) => (
-              <div key={stat.label} className="p-3 rounded-md border">
-                <p className="text-xs text-muted-foreground">{stat.label}</p>
-                <p className={`text-lg font-bold ${stat.color}`}>{stat.value}</p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader><CardTitle>GST Rules</CardTitle></CardHeader>
-        <CardContent>
-          <div className="space-y-2 text-sm">
-            <p>• Same state client → CGST + SGST applies</p>
-            <p>• Different state client → IGST applies</p>
-            <p>• GSTIN available → B2B invoice</p>
-            <p>• GSTIN missing → B2C invoice</p>
-            <p>• Expense bill GST → Input credit</p>
-            <p>• Output GST - Input GST = GST Payable</p>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader><CardTitle>TDS Management</CardTitle></CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            {tdsStats.map((stat) => (
-              <div key={stat.label} className="p-3 rounded-md border">
-                <p className="text-xs text-muted-foreground">{stat.label}</p>
-                <p className="text-lg font-bold">{stat.value}</p>
-              </div>
-            ))}
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">Add TDS Entry</Button>
-            <Button variant="outline" size="sm">Upload Certificate</Button>
-            <Button variant="outline" size="sm">Generate TDS Report</Button>
-            <Button variant="outline" size="sm">Export for CA</Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="flex gap-2 flex-wrap">
-        <Button variant="outline" className="gap-2"><FileText className="h-4 w-4" /> Generate GST Report</Button>
-        <Button variant="outline">Check Missing GSTIN</Button>
-        <Button variant="outline">View Invoice GST</Button>
-        <Button variant="outline">View Expense GST</Button>
-        <Button variant="outline">Add GST Payment</Button>
-      </div>
-    </div>
+    <ResourceManager
+      title="GST & Tax"
+      description="Output/input GST register, monthly filing status and tax payments"
+      endpoint="/api/finance/gst"
+      addLabel="Add GST Entry"
+      icon={IndianRupee}
+      fields={fields}
+      columns={columns}
+      searchKeys={["entryType", "gstType", "status"]}
+      emptyTitle="GST Register"
+      emptyDescription="Maintain output and input GST entries month-wise. Total GST is calculated from CGST, SGST and IGST automatically."
+    />
   );
 }

@@ -141,126 +141,134 @@ enum ArtworkStatus {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String
-  email         String    @unique
-  phone         String?
-  passwordHash  String
-  role          UserRole  @default(ARTIST_CLIENT)
-  avatarUrl     String?
-  status        String    @default("active")
-  lastLogin     DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  phone        String?
+  passwordHash String
+  role         UserRole  @default(ARTIST_CLIENT)
+  avatarUrl    String?
+  status       String    @default("active")
+  lastLogin    DateTime?
+  clientId     String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  tasks           Task[]         @relation("AssignedTasks")
-  createdTasks    Task[]         @relation("CreatedTasks")
-  notifications   Notification[]
-  aiGenerations   AiGeneration[]
-  uploadedFiles   File[]
-  createdClients  Client[]       @relation("CreatedByUser")
-  artworkDesigner ArtworkItem[]  @relation("DesignerArtwork")
-  artworkApprover ArtworkItem[]  @relation("ApproverArtwork")
+  tasks            Task[]            @relation("AssignedTasks")
+  createdTasks     Task[]            @relation("CreatedTasks")
+  notifications    Notification[]
+  aiGenerations    AiGeneration[]
+  uploadedFiles    File[]
+  createdClients   Client[]          @relation("CreatedByUser")
+  artworkDesigner  ArtworkItem[]     @relation("DesignerArtwork")
+  artworkApprover  ArtworkItem[]     @relation("ApproverArtwork")
   imageGenerations ImageGeneration[]
-  seoGenerations  SeoGeneration[]
-  copyrightCases  CopyrightCase[]
+  seoGenerations   SeoGeneration[]
+  copyrightCases   CopyrightCase[]
+  clientProfile    Client?           @relation("ClientPortalUsers", fields: [clientId], references: [id])
+  chatMemberships  ChatParticipant[] @relation("ChatMemberships")
+  chatMessages     ChatMessage[]     @relation("SentChatMessages")
 
   @@map("users")
 }
 
 model Client {
-  id                    String       @id @default(cuid())
-  clientType            ClientType
-  name                  String
-  stageName             String?
-  phone                 String?
-  whatsappNumber        String?
-  email                 String?
-  address               String?
-  city                  String?
-  state                 String?
-  country               String?
-  aadhaarNumber         String?
-  panNumber             String?
-  gstNumber             String?
-  bankName              String?
-  accountNumber         String?
-  ifsc                  String?
-  upiId                 String?
+  id                     String       @id @default(cuid())
+  clientType             ClientType
+  name                   String
+  stageName              String?
+  phone                  String?
+  whatsappNumber         String?
+  email                  String?
+  address                String?
+  city                   String?
+  state                  String?
+  country                String?
+  aadhaarNumber          String?
+  panNumber              String?
+  gstNumber              String?
+  bankName               String?
+  accountNumber          String?
+  ifsc                   String?
+  upiId                  String?
   revenueSharePercentage Float?
-  advanceAmount         Float?       @default(0)
-  pendingAmount         Float?       @default(0)
-  totalPaid             Float?       @default(0)
-  notes                 String?
-  status                ClientStatus @default(ACTIVE)
-  createdById           String?
-  createdBy             User?        @relation("CreatedByUser", fields: [createdById], references: [id])
-  createdAt             DateTime     @default(now())
-  updatedAt             DateTime     @updatedAt
+  advanceAmount          Float?       @default(0)
+  pendingAmount          Float?       @default(0)
+  totalPaid              Float?       @default(0)
+  notes                  String?
+  status                 ClientStatus @default(ACTIVE)
+  createdById            String?
+  createdBy              User?        @relation("CreatedByUser", fields: [createdById], references: [id])
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
 
   songParticipants SongParticipant[]
-  songsAsSinger    Song[]           @relation("SingerSongs")
-  songsAsLyricist  Song[]           @relation("LyricistSongs")
-  songsAsComposer  Song[]           @relation("ComposerSongs")
-  songsAsMusicDir  Song[]           @relation("MusicDirectorSongs")
+  songsAsSinger    Song[]            @relation("SingerSongs")
+  songsAsLyricist  Song[]            @relation("LyricistSongs")
+  songsAsComposer  Song[]            @relation("ComposerSongs")
+  songsAsMusicDir  Song[]            @relation("MusicDirectorSongs")
   copyrightAssets  CopyrightAsset[]
+  portalUsers      User[]            @relation("ClientPortalUsers")
 
   @@map("clients")
 }
 
 model Song {
-  id                    String       @id @default(cuid())
-  songTitle             String
-  alternateTitle        String?
-  language              String?      @default("Hindi")
-  category              SongCategory @default(OTHER)
-  genre                 String?
-  mood                  String?
-  singerId              String?
-  singer                Client?      @relation("SingerSongs", fields: [singerId], references: [id])
-  lyricistId            String?
-  lyricist              Client?      @relation("LyricistSongs", fields: [lyricistId], references: [id])
-  composerId            String?
-  composer              Client?      @relation("ComposerSongs", fields: [composerId], references: [id])
-  musicDirectorId       String?
-  musicDirector         Client?      @relation("MusicDirectorSongs", fields: [musicDirectorId], references: [id])
-  producerName          String?
-  labelName             String?      @default("Bainsla Music")
-  copyrightOwner        String?
+  id                     String       @id @default(cuid())
+  songTitle              String
+  alternateTitle         String?
+  language               String?      @default("Hindi")
+  category               SongCategory @default(OTHER)
+  genre                  String?
+  mood                   String?
+  singerId               String?
+  singer                 Client?      @relation("SingerSongs", fields: [singerId], references: [id])
+  lyricistId             String?
+  lyricist               Client?      @relation("LyricistSongs", fields: [lyricistId], references: [id])
+  composerId             String?
+  composer               Client?      @relation("ComposerSongs", fields: [composerId], references: [id])
+  musicDirectorId        String?
+  musicDirector          Client?      @relation("MusicDirectorSongs", fields: [musicDirectorId], references: [id])
+  producerName           String?
+  labelName              String?      @default("Bainsla Music")
+  copyrightOwner         String?
   revenueSharePercentage Float?
-  currentStage          SongStage    @default(IDEA)
-  stageStatus           StageStatus  @default(PENDING)
-  audioStatus           String?      @default("pending")
-  videoStatus           String?      @default("pending")
-  artworkStatus         String?      @default("pending")
-  agreementStatus       String?      @default("pending")
-  distributionStatus    String?      @default("pending")
-  youtubeStatus         String?      @default("pending")
-  copyrightStatus       String?      @default("pending")
-  releaseStatus         String?      @default("pending")
-  releaseDate           DateTime?
-  isrc                  String?
-  upc                   String?
-  youtubeLink           String?
-  spotifyLink           String?
-  appleMusicLink        String?
-  jiosaavnLink          String?
-  amazonMusicLink       String?
-  youtubeMusicLink      String?
-  lyrics                String?
-  description           String?
-  internalNotes         String?
-  createdAt             DateTime     @default(now())
-  updatedAt             DateTime     @updatedAt
+  currentStage           SongStage    @default(IDEA)
+  stageStatus            StageStatus  @default(PENDING)
+  audioStatus            String?      @default("pending")
+  videoStatus            String?      @default("pending")
+  artworkStatus          String?      @default("pending")
+  agreementStatus        String?      @default("pending")
+  distributionStatus     String?      @default("pending")
+  youtubeStatus          String?      @default("pending")
+  copyrightStatus        String?      @default("pending")
+  releaseStatus          String?      @default("pending")
+  releaseDate            DateTime?
+  isrc                   String?
+  upc                    String?
+  youtubeLink            String?
+  spotifyLink            String?
+  appleMusicLink         String?
+  jiosaavnLink           String?
+  amazonMusicLink        String?
+  youtubeMusicLink       String?
+  lyrics                 String?
+  description            String?
+  internalNotes          String?
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
 
-  participants    SongParticipant[]
-  statusHistory   SongStatusHistory[]
-  files           File[]             @relation("SongFiles")
-  youtubeVideos   YoutubeVideo[]
-  artworkItems    ArtworkItem[]
+  participants     SongParticipant[]
+  statusHistory    SongStatusHistory[]
+  files            File[]                @relation("SongFiles")
+  youtubeVideos    YoutubeVideo[]
+  artworkItems     ArtworkItem[]
   imageGenerations ImageGeneration[]
-  seoGenerations  SeoGeneration[]
-  copyrightAssets CopyrightAsset[]
+  seoGenerations   SeoGeneration[]
+  copyrightAssets  CopyrightAsset[]
+  studioSessions   StudioSession[]
+  videoShoots      VideoShoot[]
+  releases         DistributionRelease[]
 
   @@map("songs")
 }
@@ -296,39 +304,39 @@ model SongStatusHistory {
 }
 
 model File {
-  id          String   @id @default(cuid())
-  relatedType String?
-  relatedId   String?
-  songId      String?
-  song        Song?    @relation("SongFiles", fields: [songId], references: [id])
-  fileName    String
-  fileType    String?
-  fileUrl     String
-  fileSize    Int?
+  id           String   @id @default(cuid())
+  relatedType  String?
+  relatedId    String?
+  songId       String?
+  song         Song?    @relation("SongFiles", fields: [songId], references: [id])
+  fileName     String
+  fileType     String?
+  fileUrl      String
+  fileSize     Int?
   uploadedById String?
-  uploadedBy  User?    @relation(fields: [uploadedById], references: [id])
-  tags        String[]
-  createdAt   DateTime @default(now())
+  uploadedBy   User?    @relation(fields: [uploadedById], references: [id])
+  tags         String[]
+  createdAt    DateTime @default(now())
 
   @@map("files")
 }
 
 model Task {
-  id          String      @id @default(cuid())
-  title       String
-  description String?
+  id           String       @id @default(cuid())
+  title        String
+  description  String?
   assignedToId String?
-  assignedTo  User?       @relation("AssignedTasks", fields: [assignedToId], references: [id])
-  relatedType String?
-  relatedId   String?
-  priority    TaskPriority @default(MEDIUM)
-  status      TaskStatus   @default(PENDING)
-  dueDate     DateTime?
+  assignedTo   User?        @relation("AssignedTasks", fields: [assignedToId], references: [id])
+  relatedType  String?
+  relatedId    String?
+  priority     TaskPriority @default(MEDIUM)
+  status       TaskStatus   @default(PENDING)
+  dueDate      DateTime?
   reminderDate DateTime?
-  createdById String?
-  createdBy   User?       @relation("CreatedTasks", fields: [createdById], references: [id])
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  createdById  String?
+  createdBy    User?        @relation("CreatedTasks", fields: [createdById], references: [id])
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
   @@map("tasks")
 }
@@ -349,9 +357,9 @@ model Notification {
 }
 
 model AiGeneration {
-  id          String      @id @default(cuid())
+  id          String       @id @default(cuid())
   userId      String?
-  user        User?       @relation(fields: [userId], references: [id])
+  user        User?        @relation(fields: [userId], references: [id])
   moduleName  String?
   inputData   Json?
   promptUsed  String?
@@ -359,7 +367,7 @@ model AiGeneration {
   outputType  AiOutputType @default(TEXT)
   relatedType String?
   relatedId   String?
-  createdAt   DateTime    @default(now())
+  createdAt   DateTime     @default(now())
 
   @@map("ai_generations")
 }
@@ -423,34 +431,34 @@ model YoutubeChannel {
 }
 
 model YoutubeVideo {
-  id                  String       @id @default(cuid())
-  songId              String?
-  song                Song?        @relation(fields: [songId], references: [id])
-  channelId           String?
-  channel             YoutubeChannel? @relation(fields: [channelId], references: [id])
-  videoTitle          String?
-  videoDescription    String?
-  videoTags           String[]
-  hashtags            String[]
-  pinnedComment       String?
-  thumbnailId         String?
-  uploadStatus        UploadStatus @default(DRAFT)
-  uploadDate          DateTime?
-  scheduledDate       DateTime?
-  youtubeVideoUrl     String?
-  youtubeVideoId      String?
-  views               Int?         @default(0)
-  likes               Int?         @default(0)
-  comments            Int?         @default(0)
-  ctr                 Float?
-  rpm                 Float?
-  revenue             Float?
+  id                   String          @id @default(cuid())
+  songId               String?
+  song                 Song?           @relation(fields: [songId], references: [id])
+  channelId            String?
+  channel              YoutubeChannel? @relation(fields: [channelId], references: [id])
+  videoTitle           String?
+  videoDescription     String?
+  videoTags            String[]
+  hashtags             String[]
+  pinnedComment        String?
+  thumbnailId          String?
+  uploadStatus         UploadStatus    @default(DRAFT)
+  uploadDate           DateTime?
+  scheduledDate        DateTime?
+  youtubeVideoUrl      String?
+  youtubeVideoId       String?
+  views                Int?            @default(0)
+  likes                Int?            @default(0)
+  comments             Int?            @default(0)
+  ctr                  Float?
+  rpm                  Float?
+  revenue              Float?
   copyrightClaimStatus String?
-  seoScore            Int?
-  thumbnailScore      Int?
-  aiNotes             String?
-  createdAt           DateTime     @default(now())
-  updatedAt           DateTime     @updatedAt
+  seoScore             Int?
+  thumbnailScore       Int?
+  aiNotes              String?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
 
   @@map("youtube_videos")
 }
@@ -478,39 +486,39 @@ model ArtworkItem {
 }
 
 model CharacterProfile {
-  id                  String   @id @default(cuid())
-  characterName       String
-  characterType       String
-  description         String?
-  faceReferenceImage  String?
-  dressStyle          String?
-  jewelryStyle        String?
-  hairStyle           String?
-  skinTone            String?
-  expressionStyle     String?
-  poseStyle           String?
+  id                   String   @id @default(cuid())
+  characterName        String
+  characterType        String
+  description          String?
+  faceReferenceImage   String?
+  dressStyle           String?
+  jewelryStyle         String?
+  hairStyle            String?
+  skinTone             String?
+  expressionStyle      String?
+  poseStyle            String?
   backgroundPreference String?
-  promptTemplate      String?
-  negativePrompt      String?
-  createdAt           DateTime @default(now())
+  promptTemplate       String?
+  negativePrompt       String?
+  createdAt            DateTime @default(now())
 
   @@map("character_profiles")
 }
 
 model BrandKit {
-  id              String   @id @default(cuid())
-  brandName       String
-  logoUrl         String?
-  primaryColor    String?
-  secondaryColor  String?
-  fontStyle       String?
-  thumbnailStyle  String?
-  devotionalStyle String?
-  rasiyaStyle     String?
-  textShadowStyle String?
-  borderStyle     String?
+  id                String   @id @default(cuid())
+  brandName         String
+  logoUrl           String?
+  primaryColor      String?
+  secondaryColor    String?
+  fontStyle         String?
+  thumbnailStyle    String?
+  devotionalStyle   String?
+  rasiyaStyle       String?
+  textShadowStyle   String?
+  borderStyle       String?
   watermarkPosition String?
-  createdAt       DateTime @default(now())
+  createdAt         DateTime @default(now())
 
   @@map("brand_kits")
 }
@@ -586,7 +594,7 @@ model Asset {
 }
 
 model ThumbnailTest {
-  id                String   @id @default(cuid())
+  id                String    @id @default(cuid())
   videoId           String?
   thumbnailAId      String?
   thumbnailBId      String?
@@ -821,69 +829,69 @@ enum RiskLevel {
 }
 
 model CopyrightAsset {
-  id               String              @id @default(cuid())
-  assetCode        String              @unique
-  assetType        CopyrightAssetType
-  assetTitle       String
-  alternateTitles  String[]
-  language         String?
-  genre            String?
-  subGenre         String?
-  duration         Int?
-  isrcCode         String?
-  upcCode          String?
-  youtubeVideoId   String?
-  releaseDate      DateTime?
-  creationDate     DateTime?
-  recordingDate    DateTime?
-  labelName        String?
-  producerName     String?
-  primaryArtistId  String?
-  songId           String?
-  status           String              @default("active")
-  ownershipStatus  OwnershipStatus     @default(UNKNOWN)
-  copyrightStatus  CopyrightStatus     @default(NOT_REGISTERED)
-  createdById      String?
-  updatedById      String?
-  createdAt        DateTime            @default(now())
-  updatedAt        DateTime            @updatedAt
-  deletedAt        DateTime?
+  id              String             @id @default(cuid())
+  assetCode       String             @unique
+  assetType       CopyrightAssetType
+  assetTitle      String
+  alternateTitles String[]
+  language        String?
+  genre           String?
+  subGenre        String?
+  duration        Int?
+  isrcCode        String?
+  upcCode         String?
+  youtubeVideoId  String?
+  releaseDate     DateTime?
+  creationDate    DateTime?
+  recordingDate   DateTime?
+  labelName       String?
+  producerName    String?
+  primaryArtistId String?
+  songId          String?
+  status          String             @default("active")
+  ownershipStatus OwnershipStatus    @default(UNKNOWN)
+  copyrightStatus CopyrightStatus    @default(NOT_REGISTERED)
+  createdById     String?
+  updatedById     String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  deletedAt       DateTime?
 
-  song             Song?               @relation(fields: [songId], references: [id])
-  primaryArtist    Client?             @relation(fields: [primaryArtistId], references: [id])
-  rights           CopyrightRight[]
-  evidence         CopyrightEvidence[]
-  cases            CopyrightCase[]
-  claims           CopyrightClaim[]
-  dmcaNotices      DmcaNotice[]
-  aiMatches        CopyrightAiMatch[]  @relation("SourceAssetMatches")
-  matchedBy        CopyrightAiMatch[]  @relation("MatchedAsset")
+  song          Song?               @relation(fields: [songId], references: [id])
+  primaryArtist Client?             @relation(fields: [primaryArtistId], references: [id])
+  rights        CopyrightRight[]
+  evidence      CopyrightEvidence[]
+  cases         CopyrightCase[]
+  claims        CopyrightClaim[]
+  dmcaNotices   DmcaNotice[]
+  aiMatches     CopyrightAiMatch[]  @relation("SourceAssetMatches")
+  matchedBy     CopyrightAiMatch[]  @relation("MatchedAsset")
 
   @@map("copyright_assets")
 }
 
 model CopyrightRight {
-  id                    String         @id @default(cuid())
-  assetId               String
-  rightType             RightType
-  rightOwnerType        String
-  rightOwnerId          String?
-  ownershipPercentage   Float?
-  territory             String?        @default("worldwide")
-  startDate             DateTime?
-  endDate               DateTime?
-  isExclusive           Boolean        @default(true)
-  isTransferable        Boolean        @default(false)
-  isSubLicensable       Boolean        @default(false)
+  id                     String    @id @default(cuid())
+  assetId                String
+  rightType              RightType
+  rightOwnerType         String
+  rightOwnerId           String?
+  ownershipPercentage    Float?
+  territory              String?   @default("worldwide")
+  startDate              DateTime?
+  endDate                DateTime?
+  isExclusive            Boolean   @default(true)
+  isTransferable         Boolean   @default(false)
+  isSubLicensable        Boolean   @default(false)
   revenueSharePercentage Float?
-  agreementId           String?
-  proofDocumentId       String?
-  status                String         @default("active")
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
+  agreementId            String?
+  proofDocumentId        String?
+  status                 String    @default("active")
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 
-  asset                 CopyrightAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
-  agreement             CopyrightAgreement? @relation(fields: [agreementId], references: [id])
+  asset     CopyrightAsset      @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  agreement CopyrightAgreement? @relation(fields: [agreementId], references: [id])
 
   @@map("copyright_rights")
 }
@@ -915,7 +923,7 @@ model CopyrightAgreement {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  rights            CopyrightRight[]
+  rights CopyrightRight[]
 
   @@map("copyright_agreements")
 }
@@ -940,74 +948,74 @@ model CopyrightEvidence {
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
-  asset              CopyrightAsset?    @relation(fields: [assetId], references: [id])
-  case               CopyrightCase?     @relation(fields: [caseId], references: [id])
-  claim              CopyrightClaim?    @relation(fields: [claimId], references: [id])
+  asset CopyrightAsset? @relation(fields: [assetId], references: [id])
+  case  CopyrightCase?  @relation(fields: [caseId], references: [id])
+  claim CopyrightClaim? @relation(fields: [claimId], references: [id])
 
   @@map("copyright_evidence")
 }
 
 model CopyrightCase {
-  id                String        @id @default(cuid())
-  caseCode          String        @unique
-  caseType          CaseType
-  assetId           String?
-  originalUrl       String?
-  infringingUrl     String?
-  platform          String?
-  infringerName     String?
+  id                 String       @id @default(cuid())
+  caseCode           String       @unique
+  caseType           CaseType
+  assetId            String?
+  originalUrl        String?
+  infringingUrl      String?
+  platform           String?
+  infringerName      String?
   infringerChannelId String?
-  infringerEmail    String?
-  caseTitle         String
-  caseDescription   String?
-  priority          CasePriority  @default(NORMAL)
-  status            CaseStatus    @default(NEW)
-  assignedToId      String?
-  legalOwner        String?
-  openedAt          DateTime      @default(now())
-  closedAt          DateTime?
-  lastActionAt      DateTime?
-  nextActionDueAt   DateTime?
-  createdById       String?
-  updatedById       String?
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  infringerEmail     String?
+  caseTitle          String
+  caseDescription    String?
+  priority           CasePriority @default(NORMAL)
+  status             CaseStatus   @default(NEW)
+  assignedToId       String?
+  legalOwner         String?
+  openedAt           DateTime     @default(now())
+  closedAt           DateTime?
+  lastActionAt       DateTime?
+  nextActionDueAt    DateTime?
+  createdById        String?
+  updatedById        String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
 
-  asset             CopyrightAsset? @relation(fields: [assetId], references: [id])
-  assignedTo        User?           @relation(fields: [assignedToId], references: [id])
-  evidence          CopyrightEvidence[]
-  claims            CopyrightClaim[]
-  dmcaNotices       DmcaNotice[]
+  asset       CopyrightAsset?     @relation(fields: [assetId], references: [id])
+  assignedTo  User?               @relation(fields: [assignedToId], references: [id])
+  evidence    CopyrightEvidence[]
+  claims      CopyrightClaim[]
+  dmcaNotices DmcaNotice[]
 
   @@map("copyright_cases")
 }
 
 model CopyrightClaim {
-  id                String      @id @default(cuid())
-  caseId            String?
-  assetId           String?
-  claimType         ClaimType
-  platform          String?
-  claimReferenceId  String?
-  targetUrl         String?
-  targetVideoId     String?
-  targetChannelId   String?
-  claimAction       ClaimAction @default(MONETIZE)
-  claimReason       String?
-  claimText         String?
-  submittedById     String?
-  submittedAt       DateTime?
-  responseStatus    String?
+  id                 String      @id @default(cuid())
+  caseId             String?
+  assetId            String?
+  claimType          ClaimType
+  platform           String?
+  claimReferenceId   String?
+  targetUrl          String?
+  targetVideoId      String?
+  targetChannelId    String?
+  claimAction        ClaimAction @default(MONETIZE)
+  claimReason        String?
+  claimText          String?
+  submittedById      String?
+  submittedAt        DateTime?
+  responseStatus     String?
   responseReceivedAt DateTime?
-  platformDecision  String?
-  decisionReason    String?
-  nextAction        String?
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  platformDecision   String?
+  decisionReason     String?
+  nextAction         String?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
 
-  case              CopyrightCase? @relation(fields: [caseId], references: [id])
-  asset             CopyrightAsset? @relation(fields: [assetId], references: [id])
-  evidence          CopyrightEvidence[]
+  case     CopyrightCase?      @relation(fields: [caseId], references: [id])
+  asset    CopyrightAsset?     @relation(fields: [assetId], references: [id])
+  evidence CopyrightEvidence[]
 
   @@map("copyright_claims")
 }
@@ -1040,51 +1048,51 @@ model DmcaNotice {
   createdAt               DateTime   @default(now())
   updatedAt               DateTime   @updatedAt
 
-  case                    CopyrightCase? @relation(fields: [caseId], references: [id])
-  asset                   CopyrightAsset? @relation(fields: [assetId], references: [id])
+  case  CopyrightCase?  @relation(fields: [caseId], references: [id])
+  asset CopyrightAsset? @relation(fields: [assetId], references: [id])
 
   @@map("dmca_notices")
 }
 
 model CopyrightAiMatch {
-  id                      String    @id @default(cuid())
-  assetId                 String?
-  sourceAssetId           String?
-  matchedUrl              String?
-  matchedPlatform         String?
-  matchType               MatchType
-  matchScore              Float?
-  audioSimilarityScore    Float?
-  lyricsSimilarityScore   Float?
-  titleSimilarityScore    Float?
-  metadataSimilarityScore Float?
+  id                       String    @id @default(cuid())
+  assetId                  String?
+  sourceAssetId            String?
+  matchedUrl               String?
+  matchedPlatform          String?
+  matchType                MatchType
+  matchScore               Float?
+  audioSimilarityScore     Float?
+  lyricsSimilarityScore    Float?
+  titleSimilarityScore     Float?
+  metadataSimilarityScore  Float?
   thumbnailSimilarityScore Float?
-  videoSimilarityScore    Float?
-  aiSummary               String?
-  riskLevel               RiskLevel @default(RISK_LOW)
-  recommendedAction       String?
-  reviewStatus            String?   @default("pending")
-  reviewedById            String?
-  createdAt               DateTime  @default(now())
-  updatedAt               DateTime  @updatedAt
+  videoSimilarityScore     Float?
+  aiSummary                String?
+  riskLevel                RiskLevel @default(RISK_LOW)
+  recommendedAction        String?
+  reviewStatus             String?   @default("pending")
+  reviewedById             String?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
 
-  asset                   CopyrightAsset? @relation("SourceAssetMatches", fields: [assetId], references: [id])
-  sourceAsset             CopyrightAsset? @relation("MatchedAsset", fields: [sourceAssetId], references: [id])
+  asset       CopyrightAsset? @relation("SourceAssetMatches", fields: [assetId], references: [id])
+  sourceAsset CopyrightAsset? @relation("MatchedAsset", fields: [sourceAssetId], references: [id])
 
   @@map("copyright_ai_matches")
 }
 
 model CopyrightAuditLog {
-  id          String   @id @default(cuid())
-  entityType  String
-  entityId    String
-  action      String
-  oldValue    String?
-  newValue    String?
-  userId      String?
-  userEmail   String?
-  ipAddress   String?
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  entityType String
+  entityId   String
+  action     String
+  oldValue   String?
+  newValue   String?
+  userId     String?
+  userEmail  String?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
 
   @@map("copyright_audit_logs")
 }
@@ -1163,22 +1171,22 @@ enum GstEntryType {
 }
 
 model FinanceAccount {
-  id              String             @id @default(cuid())
-  companyId       String?
-  accountType     FinanceAccountType
-  accountName     String
-  bankName        String?
-  accountNumber   String?
-  ifscCode        String?
-  upiId           String?
-  walletProvider  String?
-  openingBalance  Float              @default(0)
-  currentBalance  Float              @default(0)
-  currency        String             @default("INR")
-  status          String             @default("active")
-  createdById     String?
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  id             String             @id @default(cuid())
+  companyId      String?
+  accountType    FinanceAccountType
+  accountName    String
+  bankName       String?
+  accountNumber  String?
+  ifscCode       String?
+  upiId          String?
+  walletProvider String?
+  openingBalance Float              @default(0)
+  currentBalance Float              @default(0)
+  currency       String             @default("INR")
+  status         String             @default("active")
+  createdById    String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
 
   incomes         FinanceIncome[]
   expenses        FinanceExpense[]
@@ -1218,148 +1226,148 @@ model FinanceIncome {
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
-  account         FinanceAccount? @relation(fields: [accountId], references: [id])
+  account FinanceAccount? @relation(fields: [accountId], references: [id])
 
   @@map("finance_income")
 }
 
 model FinanceExpense {
-  id               String        @id @default(cuid())
-  companyId        String?
-  expenseCode      String        @unique
-  expenseTitle     String
-  expenseCategory  String
-  vendorId         String?
-  artistId         String?
-  studioId         String?
-  songId           String?
-  projectId        String?
-  amount           Float
-  gstAmount        Float?        @default(0)
-  tdsAmount        Float?        @default(0)
-  netAmount        Float
-  expenseDate      DateTime
-  paidDate         DateTime?
-  paymentMode      String?
-  accountId        String?
-  transactionId    String?
-  approvalStatus   ExpenseStatus @default(EXPENSE_DRAFT)
-  paymentStatus    String?       @default("unpaid")
-  billNumber       String?
-  invoiceNumber    String?
-  referenceNumber  String?
-  notes            String?
-  createdById      String?
-  approvedById     String?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  id              String        @id @default(cuid())
+  companyId       String?
+  expenseCode     String        @unique
+  expenseTitle    String
+  expenseCategory String
+  vendorId        String?
+  artistId        String?
+  studioId        String?
+  songId          String?
+  projectId       String?
+  amount          Float
+  gstAmount       Float?        @default(0)
+  tdsAmount       Float?        @default(0)
+  netAmount       Float
+  expenseDate     DateTime
+  paidDate        DateTime?
+  paymentMode     String?
+  accountId       String?
+  transactionId   String?
+  approvalStatus  ExpenseStatus @default(EXPENSE_DRAFT)
+  paymentStatus   String?       @default("unpaid")
+  billNumber      String?
+  invoiceNumber   String?
+  referenceNumber String?
+  notes           String?
+  createdById     String?
+  approvedById    String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
-  account          FinanceAccount? @relation(fields: [accountId], references: [id])
+  account FinanceAccount? @relation(fields: [accountId], references: [id])
 
   @@map("finance_expenses")
 }
 
 model FinanceInvoice {
-  id              String        @id @default(cuid())
-  companyId       String?
-  invoiceNumber   String        @unique
-  invoiceType     String
-  clientId        String?
-  invoiceDate     DateTime
-  dueDate         DateTime?
-  placeOfSupply   String?
-  subtotal        Float
-  discountAmount  Float?        @default(0)
-  taxableAmount   Float
-  cgstAmount      Float?        @default(0)
-  sgstAmount      Float?        @default(0)
-  igstAmount      Float?        @default(0)
-  totalGst        Float?        @default(0)
-  grandTotal      Float
-  paidAmount      Float?        @default(0)
-  balanceAmount   Float?
-  status          InvoiceStatus @default(INV_DRAFT)
-  pdfFileId       String?
-  createdById     String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id             String        @id @default(cuid())
+  companyId      String?
+  invoiceNumber  String        @unique
+  invoiceType    String
+  clientId       String?
+  invoiceDate    DateTime
+  dueDate        DateTime?
+  placeOfSupply  String?
+  subtotal       Float
+  discountAmount Float?        @default(0)
+  taxableAmount  Float
+  cgstAmount     Float?        @default(0)
+  sgstAmount     Float?        @default(0)
+  igstAmount     Float?        @default(0)
+  totalGst       Float?        @default(0)
+  grandTotal     Float
+  paidAmount     Float?        @default(0)
+  balanceAmount  Float?
+  status         InvoiceStatus @default(INV_DRAFT)
+  pdfFileId      String?
+  createdById    String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
-  receipts        FinanceReceipt[]
-  items           FinanceInvoiceItem[]
+  receipts FinanceReceipt[]
+  items    FinanceInvoiceItem[]
 
   @@map("finance_invoices")
 }
 
 model FinanceInvoiceItem {
-  id              String  @id @default(cuid())
-  invoiceId       String
-  description     String
-  hsnSacCode      String?
-  quantity        Float   @default(1)
-  rate            Float
-  amount          Float
-  discount        Float?  @default(0)
-  taxableAmount   Float
-  gstRate         Float?
-  gstAmount       Float?  @default(0)
+  id            String  @id @default(cuid())
+  invoiceId     String
+  description   String
+  hsnSacCode    String?
+  quantity      Float   @default(1)
+  rate          Float
+  amount        Float
+  discount      Float?  @default(0)
+  taxableAmount Float
+  gstRate       Float?
+  gstAmount     Float?  @default(0)
 
-  invoice         FinanceInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoice FinanceInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   @@map("finance_invoice_items")
 }
 
 model FinanceReceipt {
-  id              String   @id @default(cuid())
-  companyId       String?
-  receiptNumber   String   @unique
-  clientId        String?
-  invoiceId       String?
-  receiptDate     DateTime
-  amountReceived  Float
-  paymentMode     String?
-  accountId       String?
-  transactionId   String?
-  balanceAmount   Float?   @default(0)
-  purpose         String?
-  pdfFileId       String?
-  createdById     String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String   @id @default(cuid())
+  companyId      String?
+  receiptNumber  String   @unique
+  clientId       String?
+  invoiceId      String?
+  receiptDate    DateTime
+  amountReceived Float
+  paymentMode    String?
+  accountId      String?
+  transactionId  String?
+  balanceAmount  Float?   @default(0)
+  purpose        String?
+  pdfFileId      String?
+  createdById    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  invoice         FinanceInvoice? @relation(fields: [invoiceId], references: [id])
-  account         FinanceAccount? @relation(fields: [accountId], references: [id])
+  invoice FinanceInvoice? @relation(fields: [invoiceId], references: [id])
+  account FinanceAccount? @relation(fields: [accountId], references: [id])
 
   @@map("finance_receipts")
 }
 
 model FinancePayment {
-  id              String      @id @default(cuid())
-  companyId       String?
-  paymentCode     String      @unique
-  paymentType     PaymentType
-  payeeType       String
-  payeeId         String?
-  songId          String?
-  projectId       String?
-  agreementId     String?
-  grossAmount     Float
-  tdsAmount       Float?      @default(0)
-  gstAmount       Float?      @default(0)
-  netAmount       Float
-  paidAmount      Float?      @default(0)
-  pendingAmount   Float?
-  dueDate         DateTime?
-  paidDate        DateTime?
-  paymentMode     String?
-  accountId       String?
-  status          String      @default("pending")
-  proofFileId     String?
-  createdById     String?
-  approvedById    String?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  id            String      @id @default(cuid())
+  companyId     String?
+  paymentCode   String      @unique
+  paymentType   PaymentType
+  payeeType     String
+  payeeId       String?
+  songId        String?
+  projectId     String?
+  agreementId   String?
+  grossAmount   Float
+  tdsAmount     Float?      @default(0)
+  gstAmount     Float?      @default(0)
+  netAmount     Float
+  paidAmount    Float?      @default(0)
+  pendingAmount Float?
+  dueDate       DateTime?
+  paidDate      DateTime?
+  paymentMode   String?
+  accountId     String?
+  status        String      @default("pending")
+  proofFileId   String?
+  createdById   String?
+  approvedById  String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
-  account         FinanceAccount? @relation(fields: [accountId], references: [id])
+  account FinanceAccount? @relation(fields: [accountId], references: [id])
 
   @@map("finance_payments")
 }
@@ -1381,48 +1389,48 @@ model FinanceTransaction {
   createdById     String?
   createdAt       DateTime        @default(now())
 
-  account         FinanceAccount? @relation(fields: [accountId], references: [id])
+  account FinanceAccount? @relation(fields: [accountId], references: [id])
 
   @@map("finance_transactions")
 }
 
 model FinanceGstEntry {
-  id              String       @id @default(cuid())
-  companyId       String?
-  entryType       GstEntryType
-  sourceModule    String?
-  sourceId        String?
-  gstType         String?
-  taxableAmount   Float
-  cgstRate        Float?       @default(0)
-  cgstAmount      Float?       @default(0)
-  sgstRate        Float?       @default(0)
-  sgstAmount      Float?       @default(0)
-  igstRate        Float?       @default(0)
-  igstAmount      Float?       @default(0)
-  totalGst        Float
-  gstMonth        Int?
-  gstYear         Int?
-  status          String       @default("pending")
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  id            String       @id @default(cuid())
+  companyId     String?
+  entryType     GstEntryType
+  sourceModule  String?
+  sourceId      String?
+  gstType       String?
+  taxableAmount Float
+  cgstRate      Float?       @default(0)
+  cgstAmount    Float?       @default(0)
+  sgstRate      Float?       @default(0)
+  sgstAmount    Float?       @default(0)
+  igstRate      Float?       @default(0)
+  igstAmount    Float?       @default(0)
+  totalGst      Float
+  gstMonth      Int?
+  gstYear       Int?
+  status        String       @default("pending")
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
   @@map("finance_gst_entries")
 }
 
 model FinanceAuditLog {
-  id          String   @id @default(cuid())
-  companyId   String?
-  userId      String?
-  module      String
-  entityType  String
-  entityId    String
-  action      String
-  oldValue    String?
-  newValue    String?
-  ipAddress   String?
-  deviceInfo  String?
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  companyId  String?
+  userId     String?
+  module     String
+  entityType String
+  entityId   String
+  action     String
+  oldValue   String?
+  newValue   String?
+  ipAddress  String?
+  deviceInfo String?
+  createdAt  DateTime @default(now())
 
   @@map("finance_audit_logs")
 }
@@ -1453,7 +1461,7 @@ enum ChatMessageType {
 }
 
 model AutomationRule {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   companyId       String?
   ruleName        String
   description     String?
@@ -1461,11 +1469,11 @@ model AutomationRule {
   triggerConfig   String?
   actionType      String
   actionConfig    String?
-  isActive        Boolean  @default(true)
+  isActive        Boolean   @default(true)
   lastTriggeredAt DateTime?
   createdById     String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@map("automation_rules")
 }
@@ -1494,8 +1502,8 @@ model ChatThread {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  participants    ChatParticipant[]
-  messages        ChatMessage[]
+  participants ChatParticipant[]
+  messages     ChatMessage[]
 
   @@map("chat_threads")
 }
@@ -1509,24 +1517,26 @@ model ChatParticipant {
   lastReadAt      DateTime?
   status          String    @default("active")
 
-  thread          ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  thread ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user   User       @relation("ChatMemberships", fields: [userId], references: [id])
 
   @@map("chat_participants")
 }
 
 model ChatMessage {
-  id              String          @id @default(cuid())
-  threadId        String
-  senderId        String
-  messageType     ChatMessageType @default(TEXT)
-  messageText     String?
-  fileId          String?
+  id               String          @id @default(cuid())
+  threadId         String
+  senderId         String
+  messageType      ChatMessageType @default(TEXT)
+  messageText      String?
+  fileId           String?
   replyToMessageId String?
-  isDeleted       Boolean         @default(false)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  isDeleted        Boolean         @default(false)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
 
-  thread          ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  thread ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  sender User       @relation("SentChatMessages", fields: [senderId], references: [id])
 
   @@map("chat_messages")
 }
@@ -1642,4 +1652,91 @@ model DigitalSignature {
   createdAt       DateTime @default(now())
 
   @@map("digital_signatures")
+}
+
+// ============================================================
+// Studio sessions, video shoots and distribution releases
+// ============================================================
+
+enum StudioSessionType {
+  RECORDING
+  MIXING
+  MASTERING
+  DUBBING
+  LIVE_SESSION
+  REHEARSAL
+}
+
+model StudioSession {
+  id           String            @id @default(cuid())
+  sessionCode  String            @unique
+  songId       String?
+  sessionType  StudioSessionType @default(RECORDING)
+  studioName   String
+  studioCity   String?
+  engineerName String?
+  sessionDate  DateTime
+  startTime    String?
+  endTime      String?
+  hours        Float?
+  ratePerHour  Float?
+  totalCost    Float?
+  status       String            @default("scheduled")
+  notes        String?
+  createdById  String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  song Song? @relation(fields: [songId], references: [id])
+
+  @@map("studio_sessions")
+}
+
+model VideoShoot {
+  id           String    @id @default(cuid())
+  shootCode    String    @unique
+  songId       String?
+  shootTitle   String
+  shootType    String?
+  location     String?
+  city         String?
+  shootDate    DateTime
+  endDate      DateTime?
+  directorName String?
+  cameraTeam   String?
+  dancersCount Int?
+  budget       Float?
+  actualCost   Float?
+  status       String    @default("planned")
+  notes        String?
+  createdById  String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  song Song? @relation(fields: [songId], references: [id])
+
+  @@map("video_shoots")
+}
+
+model DistributionRelease {
+  id           String    @id @default(cuid())
+  releaseCode  String    @unique
+  songId       String?
+  releaseTitle String
+  distributor  String?
+  platforms    String[]
+  releaseDate  DateTime?
+  liveDate     DateTime?
+  isrc         String?
+  upc          String?
+  revenueShare Float?
+  status       String    @default("draft")
+  notes        String?
+  createdById  String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  song Song? @relation(fields: [songId], references: [id])
+
+  @@map("distribution_releases")
 }

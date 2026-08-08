@@ -27,14 +27,14 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
+      const data = (await res.json()) as { error?: string; redirectTo?: string };
 
       if (!res.ok) {
         setError(data.error || "Login failed");
         return;
       }
 
-      router.push("/dashboard");
+      router.push(data.redirectTo ?? "/dashboard");
       router.refresh();
     } catch {
       setError("Something went wrong");

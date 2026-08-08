@@ -1,119 +1,63 @@
 "use client";
 
-import { useState } from "react";
-import { Upload, Plus, Search, Filter, CheckCircle } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { FolderLock } from "lucide-react";
+import { ResourceManager, type FieldDef, type ColumnDef } from "@/components/resource-manager";
 
-export default function CopyrightEvidencePage() {
-  const [showForm, setShowForm] = useState(false);
+const EVIDENCE_TYPES = [
+  "SIGNED_AGREEMENT", "STUDIO_INVOICE", "RAW_AUDIO_FILE", "PROJECT_FILE", "LYRICS_FILE",
+  "VIDEO_PROJECT_FILE", "THUMBNAIL_SOURCE_FILE", "RELEASE_SCREENSHOT",
+  "YOUTUBE_UPLOAD_SCREENSHOT", "YOUTUBE_STUDIO_SCREENSHOT", "DISTRIBUTION_DASHBOARD_SCREENSHOT",
+  "ISRC_CERTIFICATE", "UPC_CERTIFICATE", "PAYMENT_PROOF", "WHATSAPP_CHAT", "EMAIL_PERMISSION",
+  "ARTIST_ID_PROOF", "STUDIO_PERMISSION", "COPYRIGHT_REGISTRATION", "PLATFORM_CLAIM_SCREENSHOT",
+  "INFRINGING_URL_SCREENSHOT", "SCREEN_RECORDING", "AUDIO_FINGERPRINT_REPORT",
+  "AI_SIMILARITY_REPORT", "METADATA_REPORT", "DMCA_NOTICE_COPY", "COUNTER_NOTICE_COPY",
+  "LEGAL_NOTICE_COPY",
+].map((value) => ({ value, label: value.replaceAll("_", " ") }));
 
-  const evidenceTypes = [
-    "Signed Agreement", "Studio Invoice", "Raw Audio File", "Project File", "Lyrics File",
-    "Video Project File", "Thumbnail Source File", "Release Screenshot", "YouTube Upload Screenshot",
-    "YouTube Studio Screenshot", "Distribution Dashboard Screenshot", "ISRC Certificate",
-    "UPC Certificate", "Payment Proof", "WhatsApp Chat", "Email Permission",
-    "Artist ID Proof", "Studio Permission", "Copyright Registration",
-    "Audio Fingerprint Report", "AI Similarity Report", "DMCA Notice Copy"
-  ];
+const VERIFICATION = ["UPLOADED", "PENDING_REVIEW", "VERIFIED", "REJECTED", "NEEDS_BETTER_COPY", "EXPIRED", "DUPLICATE"]
+  .map((value) => ({ value, label: value.replaceAll("_", " ") }));
 
+const WEIGHTS = ["LOW_WEIGHT", "MEDIUM_WEIGHT", "HIGH_WEIGHT", "CRITICAL_WEIGHT"]
+  .map((value) => ({ value, label: value.replace("_WEIGHT", "") }));
+
+const fields: FieldDef[] = [
+  { name: "evidenceTitle", label: "Evidence Title", required: true, placeholder: "What this evidence proves" },
+  { name: "evidenceType", label: "Evidence Type", type: "select", options: EVIDENCE_TYPES, required: true },
+  { name: "legalWeight", label: "Legal Weight", type: "select", options: WEIGHTS, defaultValue: "MEDIUM_WEIGHT" },
+  { name: "verificationStatus", label: "Verification", type: "select", options: VERIFICATION, defaultValue: "UPLOADED" },
+  { name: "assetId", label: "Asset ID", placeholder: "Linked asset (optional)" },
+  { name: "caseId", label: "Case ID", placeholder: "Linked case (optional)" },
+  { name: "platform", label: "Platform", placeholder: "YouTube / WhatsApp / Email" },
+  { name: "sourceUrl", label: "Source URL", placeholder: "https://" },
+  { name: "capturedAt", label: "Captured At", type: "date" },
+  { name: "isPrimaryEvidence", label: "Primary Evidence", type: "checkbox" },
+  { name: "fileId", label: "Upload File", type: "file", span: 2 },
+  { name: "description", label: "Description", type: "textarea", span: 3 },
+];
+
+const columns: ColumnDef[] = [
+  { key: "evidenceTitle", label: "Title" },
+  { key: "evidenceType", label: "Type", format: "enum" },
+  { key: "platform", label: "Platform" },
+  { key: "legalWeight", label: "Weight", format: "enum" },
+  { key: "verificationStatus", label: "Verification", format: "enum" },
+  { key: "capturedAt", label: "Captured", format: "date" },
+  { key: "createdAt", label: "Added", format: "datetime" },
+];
+
+export default function EvidencePage() {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Evidence Vault</h1>
-          <p className="text-muted-foreground">Store, verify, and manage copyright evidence and proofs</p>
-        </div>
-        <Button onClick={() => setShowForm(!showForm)} className="gap-2">
-          <Plus className="h-4 w-4" /> Upload Evidence
-        </Button>
-      </div>
-
-      <div className="flex gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search evidence..." className="pl-9" />
-        </div>
-        <Button variant="outline" className="gap-2"><Filter className="h-4 w-4" /> Filters</Button>
-      </div>
-
-      {showForm && (
-        <Card>
-          <CardHeader><CardTitle>Upload New Evidence</CardTitle></CardHeader>
-          <CardContent>
-            <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium">Evidence Title *</label>
-                <Input placeholder="Title for this evidence" />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Evidence Type *</label>
-                <select className="w-full h-9 rounded-md border px-3 text-sm bg-background">
-                  <option value="">Select type</option>
-                  {evidenceTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Related Asset / Song</label>
-                <Input placeholder="Link to asset or song" />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Platform</label>
-                <Input placeholder="YouTube, Spotify, etc." />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Source URL</label>
-                <Input placeholder="URL where evidence was captured" />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Captured Date</label>
-                <Input type="date" />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Legal Weight</label>
-                <select className="w-full h-9 rounded-md border px-3 text-sm bg-background">
-                  <option value="LOW_WEIGHT">Low</option>
-                  <option value="MEDIUM_WEIGHT">Medium</option>
-                  <option value="HIGH_WEIGHT">High</option>
-                  <option value="CRITICAL_WEIGHT">Critical</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Primary Evidence?</label>
-                <select className="w-full h-9 rounded-md border px-3 text-sm bg-background">
-                  <option value="false">No</option>
-                  <option value="true">Yes</option>
-                </select>
-              </div>
-              <div className="md:col-span-2">
-                <label className="text-sm font-medium">Description</label>
-                <textarea className="w-full min-h-[60px] rounded-md border px-3 py-2 text-sm bg-background" placeholder="Describe this evidence..." />
-              </div>
-              <div className="md:col-span-2">
-                <label className="text-sm font-medium">Upload File</label>
-                <Input type="file" />
-              </div>
-              <div className="md:col-span-2 flex gap-3">
-                <Button type="button">Upload & Save</Button>
-                <Button type="button" variant="outline">Mark as Verified</Button>
-                <Button type="button" variant="ghost" onClick={() => setShowForm(false)}>Cancel</Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
-
-      <Card>
-        <CardContent className="p-6 text-center py-8">
-          <Upload className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
-          <h3 className="font-medium mb-1">Evidence Management</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Upload and verify evidence including signed agreements, raw audio files, release screenshots, payment proofs, studio invoices, ISRC certificates, and more. Each evidence is hashed and timestamped for legal validity.
-          </p>
-          <Button onClick={() => setShowForm(true)} className="gap-2"><Plus className="h-4 w-4" /> Upload First Evidence</Button>
-        </CardContent>
-      </Card>
-    </div>
+    <ResourceManager
+      title="Evidence Vault"
+      description="Agreements, raw files, screenshots and reports that prove ownership"
+      endpoint="/api/copyright/evidence"
+      addLabel="Upload Evidence"
+      icon={FolderLock}
+      fields={fields}
+      columns={columns}
+      searchKeys={["evidenceTitle", "evidenceType", "platform", "verificationStatus"]}
+      emptyTitle="Evidence Vault"
+      emptyDescription="Upload signed agreements, studio invoices, raw project files, screenshots and AI similarity reports — each tagged with legal weight and verification status."
+    />
   );
 }
